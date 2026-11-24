@@ -30,6 +30,16 @@ create index if not exists progress_user_id_idx on public.progress (user_id);
 create index if not exists progress_learner_id_idx on public.progress (learner_id);
 create index if not exists questions_user_id_idx on public.questions (user_id);
 
+-- Signed-in users reach these tables through the API. Row-level security below
+-- decides which rows they can touch; these grants only open the tables.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.learners to authenticated;
+grant select, insert, update, delete on public.progress to authenticated;
+grant select, insert, update, delete on public.questions to authenticated;
+revoke all on public.learners from anon;
+revoke all on public.progress from anon;
+revoke all on public.questions from anon;
+
 alter table public.learners enable row level security;
 alter table public.progress enable row level security;
 alter table public.questions enable row level security;
