@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { isValidSupabaseUrl } from "@/lib/supabase-url";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -9,7 +10,9 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  * Supabase is optional. When the public URL and anon key are present the app
  * uses a real backend; without them it keeps working entirely on the device.
  */
-export const isSupabaseConfigured = Boolean(url && anonKey);
+export const isSupabaseConfigured = Boolean(
+  url && anonKey && isValidSupabaseUrl(url),
+);
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url as string, anonKey as string, {
