@@ -161,7 +161,7 @@ function LoginForm() {
         </button>
 
         <p className="mt-5 text-cocoa-700">
-          This account is saved on this device.
+          Your account is kept private and safe.
         </p>
 
         <p className="mt-4">

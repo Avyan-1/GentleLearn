@@ -190,6 +190,28 @@ export function setActiveLearner(phone: string, learnerId: string) {
   write(keys.activeLearner(phone), learnerId);
 }
 
+/* ---------------------------------------------------------------------------
+ * Cache writers used by the optional Supabase backend.
+ * The app always reads from local storage, so it keeps working offline and
+ * still feels instant. These replace the local copy after a server sync.
+ * ------------------------------------------------------------------------- */
+
+export function cacheLearners(phone: string, learners: Learner[]) {
+  write(keys.learners(phone), learners);
+}
+
+export function cacheProgress(
+  phone: string,
+  learnerId: string,
+  progress: Progress,
+) {
+  write(keys.progress(phone, learnerId), progress);
+}
+
+export function cacheQuestions(phone: string, questions: Question[]) {
+  write(keys.questions(phone), questions);
+}
+
 export function getProgress(phone: string, learnerId: string): Progress {
   return read<Progress>(keys.progress(phone, learnerId), {});
 }

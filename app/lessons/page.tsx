@@ -2,155 +2,226 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useApp } from "@/components/app-provider";
-import { Card, LinkButton, PageTitle, cx } from "@/components/ui";
-import { categories, lessons, plusLessons } from "@/lib/lessons";
+import { cx } from "@/components/ui";
+import { categories, freeLessons, lessons, plusLessons, quizLesson } from "@/lib/lessons";
+
+function StatusPill({ done, plus }: { done: boolean; plus?: boolean }) {
+  return (
+    <span
+      className={cx(
+        "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
+        done
+          ? "bg-forest-600 text-white"
+          : plus
+            ? "bg-sand-200 text-cocoa-700"
+            : "bg-sand-100 text-cocoa-700",
+      )}
+    >
+      {done ? "Done" : plus ? "Plus" : "Start"}
+    </span>
+  );
+}
+
+function Group({
+  title,
+  subtitle,
+  done,
+  total,
+  open,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  done: number;
+  total: number;
+  open?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      open={open}
+      className="group overflow-hidden rounded-3xl border-2 border-sand-200 bg-white"
+    >
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 hover:bg-sand-50 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <span className="display block text-xl font-bold text-cocoa-800 sm:text-2xl">
+            {title}
+          </span>
+          <span className="mt-0.5 block text-sm font-semibold text-cocoa-600">
+            {subtitle}
+          </span>
+        </span>
+
+        <span className="hidden shrink-0 rounded-full bg-sand-100 px-3 py-1 text-sm font-bold text-cocoa-700 sm:inline">
+          {done}/{total}
+        </span>
+        <span
+          aria-hidden="true"
+          className="shrink-0 text-xl text-cocoa-600 transition-transform group-open:rotate-180"
+        >
+          ▾
+        </span>
+      </summary>
+
+      <div className="border-t-2 border-sand-100 px-4 py-3 sm:px-5">{children}</div>
+    </details>
+  );
+}
 
 export default function LessonsPage() {
   const router = useRouter();
-  const {
-    ready,
-    phone,
-    learners,
-    activeLearner,
-    selectLearner,
-    progress,
-  } = useApp();
+  const { ready, phone, activeLearner, progress } = useApp();
 
   useEffect(() => {
     if (ready && !phone) router.replace("/login");
   }, [ready, phone, router]);
 
-  if (!ready || !phone) {
+  useEffect(() => {
+    if (ready && phone && !activeLearner) router.replace("/learners");
+  }, [ready, phone, activeLearner, router]);
+
+  if (!ready || !phone || !activeLearner) {
     return <div className="min-h-[60vh]" aria-busy="true" />;
   }
 
-  if (!activeLearner) {
-    return (
-      <div className="mx-auto max-w-2xl px-5 pt-16 pb-16 text-center">
-        <h1 className="text-4xl text-cocoa-800 sm:text-5xl">
-          Who is learning today?
-        </h1>
-        <p className="mt-4 text-lg text-cocoa-700">
-          Pick a name first so we can keep your lessons personal.
-        </p>
-
-        {learners.length > 0 ? (
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-            {learners.map((learner) => (
-              <li key={learner.id}>
-                <button
-                  type="button"
-                  onClick={() => selectLearner(learner.id)}
-                  className="w-full rounded-2xl border-2 border-sand-200 bg-white px-5 py-4 text-xl font-bold text-cocoa-800 hover:border-forest-500 hover:bg-sand-100"
-                >
-                  {learner.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Card className="mt-8">
-            <p className="text-lg text-cocoa-700">
-              No names yet. Add the first learner in the Family corner, then
-              come back here.
-            </p>
-            <LinkButton href="/family" className="mt-5" size="lg">
-              Go to the Family corner
-            </LinkButton>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  const done = Object.keys(progress).length;
-  const freeDone = lessons.filter(
-    (lesson) => !lesson.plus && progress[lesson.slug],
-  ).length;
+  const freeDone = freeLessons.filter((lesson) => progress[lesson.slug]).length;
+  const percent = Math.round((freeDone / freeLessons.length) * 100);
 
   return (
-    <div className="mx-auto max-w-5xl px-5 pt-8 pb-16">
-      <PageTitle
-        title={`Lessons for ${activeLearner.name}`}
-        subtitle="One big step at a time. You can stop and come back whenever you like."
-      />
+    <div className="mx-auto max-w-4xl px-5 pt-6 pb-16">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-cocoa-600 uppercase">
+            Learning today
+          </p>
+          <h1 className="mt-1 text-4xl text-cocoa-800 sm:text-5xl">
+            Hi {activeLearner.name}
+          </h1>
+          <p className="mt-2 max-w-lg text-lg text-cocoa-700">
+            Pick a lesson below. Everything is saved as you go.
+          </p>
+        </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <span className="rounded-full border-2 border-sand-200 bg-white px-4 py-2 text-sm font-bold text-cocoa-700">
-          {freeDone} of 10 free lessons finished
-        </span>
-        <span className="rounded-full border-2 border-sand-200 bg-white px-4 py-2 text-sm font-bold text-cocoa-700">
-          {done} lesson{done === 1 ? "" : "s"} done in total
-        </span>
-        {learners.length > 1 ? (
-          <Link
-            href="/lessons"
-            onClick={() => selectLearner("")}
-            className="text-sm font-bold text-forest-700 underline underline-offset-4"
+        <Link
+          href="/learners"
+          className="group inline-flex items-center gap-3 rounded-2xl bg-forest-600 px-4 py-3 text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-forest-700 hover:shadow-lg"
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg"
           >
-            Switch name
-          </Link>
-        ) : null}
+            ⇄
+          </span>
+          <span>
+            <span className="block text-sm font-semibold text-white/85">
+              Not you, {activeLearner.name}?
+            </span>
+            <span className="display block text-lg font-bold">
+              Switch learner
+            </span>
+          </span>
+        </Link>
       </div>
 
-      <div className="mt-10 space-y-10">
-        <section>
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-2xl text-cocoa-800 sm:text-3xl">Start here</h2>
-            <p className="text-sm font-bold text-cocoa-600">
-              The 10 regular lessons — free forever
-            </p>
-          </div>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {lessons
-              .filter((lesson) => !lesson.plus)
-              .map((lesson) => (
+      <div className="mt-6 rounded-3xl bg-sand-100 px-5 py-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-bold text-cocoa-800">
+            {freeDone} of {freeLessons.length} free lessons finished
+          </p>
+          <p className="text-sm font-semibold text-cocoa-600">
+            {percent}% of the free course
+          </p>
+        </div>
+        <div className="mt-2 h-3 overflow-hidden rounded-full bg-white">
+          <div
+            className="h-full rounded-full bg-forest-500 transition-all"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-8 space-y-3">
+        <Group
+          title="Start here"
+          subtitle="The 10 regular lessons — free forever"
+          done={freeDone}
+          total={freeLessons.length}
+          open
+        >
+          <ul className="space-y-2">
+            {freeLessons.map((lesson) => {
+              const done = Boolean(progress[lesson.slug]);
+
+              return (
                 <li key={lesson.slug}>
                   <Link
                     href={`/lessons/${lesson.slug}`}
                     className={cx(
-                      "flex h-full items-start justify-between gap-3 rounded-2xl border-2 bg-white px-5 py-4 transition-colors",
-                      progress[lesson.slug]
-                        ? "border-forest-500"
-                        : "border-sand-200 hover:border-sand-300 hover:bg-sand-50",
+                      "flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition-colors",
+                      done
+                        ? "bg-forest-500/10 hover:bg-forest-500/15"
+                        : "bg-sand-100 hover:bg-sand-200",
                     )}
                   >
-                    <span>
-                      <span className="display block text-lg font-bold text-cocoa-800">
+                    <span className="min-w-0">
+                      <span className="display block truncate text-lg font-bold text-cocoa-800">
                         {lesson.title}
                       </span>
-                      <span className="mt-1 block text-sm font-semibold text-cocoa-600">
+                      <span className="block text-sm font-semibold text-cocoa-600">
                         about {lesson.minutes} minute
                         {lesson.minutes === 1 ? "" : "s"}
                         {lesson.quiz ? " · quiz" : ""}
                       </span>
                     </span>
-                    <span
-                      className={cx(
-                        "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
-                        progress[lesson.slug]
-                          ? "bg-forest-600 text-white"
-                          : "bg-sand-100 text-cocoa-700",
-                      )}
-                    >
-                      {progress[lesson.slug] ? "Done" : "Start"}
-                    </span>
+                    <StatusPill done={done} />
                   </Link>
                 </li>
-              ))}
+              );
+            })}
           </ul>
-        </section>
+        </Group>
 
-        <div className="rounded-3xl bg-sand-100 px-5 py-4">
-          <h2 className="text-2xl text-cocoa-800 sm:text-3xl">
+        {quizLesson ? (
+          <Link
+            href={`/lessons/${quizLesson.slug}`}
+            className="flex items-center gap-4 rounded-3xl border-2 border-amber-400 bg-amber-300/25 px-5 py-4 transition-colors hover:bg-amber-300/40"
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-2xl text-cocoa-800"
+            >
+              ✓
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="display block text-xl font-bold text-cocoa-800">
+                Test yourself — {quizLesson.title}
+              </span>
+              <span className="block text-sm font-semibold text-cocoa-700">
+                {quizLesson.summary}
+              </span>
+            </span>
+            <span
+              className={cx(
+                "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
+                progress[quizLesson.slug]
+                  ? "bg-forest-600 text-white"
+                  : "bg-white text-cocoa-700",
+              )}
+            >
+              {progress[quizLesson.slug] ? "Done" : "Quiz"}
+            </span>
+          </Link>
+        ) : null}
+
+        <div className="flex items-baseline justify-between gap-3 px-2 pt-4">
+          <h2 className="text-xl text-cocoa-800 sm:text-2xl">
             More lessons with Plus
           </h2>
-          <p className="mt-1 text-cocoa-700">
-            {plusLessons.length} extra lessons, grouped by what you want to do
-            next. Plus is coming soon — these open when it arrives.
-          </p>
+          <span className="text-sm font-bold text-cocoa-600">
+            {plusLessons.length} extra
+          </span>
         </div>
 
         {categories.map((category) => {
@@ -160,41 +231,32 @@ export default function LessonsPage() {
           if (items.length === 0) return null;
 
           return (
-            <section key={category}>
-              <h3 className="text-xl text-cocoa-800 sm:text-2xl">{category}</h3>
-              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Group
+              key={category}
+              title={category}
+              subtitle={`${items.length} lessons in this group`}
+              done={0}
+              total={items.length}
+            >
+              <ul className="space-y-2">
                 {items.map((lesson) => (
                   <li key={lesson.slug}>
                     <Link
                       href="/plans"
-                      className="flex h-full items-center justify-between gap-3 rounded-2xl border-2 border-sand-200 bg-white px-5 py-4 transition-colors hover:border-sand-300 hover:bg-sand-50"
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-sand-100 px-4 py-3 hover:bg-sand-200"
                     >
-                      <span className="display text-lg font-bold text-cocoa-800">
+                      <span className="display min-w-0 truncate text-lg font-bold text-cocoa-800">
                         {lesson.title}
                       </span>
-                      <span className="shrink-0 rounded-full bg-sand-100 px-3 py-1 text-sm font-bold text-cocoa-700">
-                        Plus
-                      </span>
+                      <StatusPill done={false} plus />
                     </Link>
                   </li>
                 ))}
               </ul>
-            </section>
+            </Group>
           );
         })}
       </div>
-
-      <Card className="mt-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl text-cocoa-800">Questions?</h2>
-          <p className="mt-1 text-cocoa-700">
-            Ask in your own words and a family member will see it.
-          </p>
-        </div>
-        <LinkButton href="/ask" variant="outline">
-          Ask a question
-        </LinkButton>
-      </Card>
     </div>
   );
 }

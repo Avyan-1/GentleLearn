@@ -59,7 +59,7 @@ export default function HelpPage() {
 
       <Card className="mt-8">
         <p className="text-cocoa-700">
-          Your account is saved on this device. Keep your password safe.
+          Your account is kept safe. Keep your password to yourself.
         </p>
       </Card>
 

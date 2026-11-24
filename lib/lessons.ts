@@ -1,6 +1,19 @@
+export type ExampleKey =
+  | "fraud-email"
+  | "website-address"
+  | "otp-message"
+  | "prize-sms"
+  | "photo-message"
+  | "video-call"
+  | "bill-payment"
+  | "caller-id"
+  | "strange-link"
+  | "family-in-trouble";
+
 export type Step = {
   title: string;
   body: string;
+  example?: ExampleKey;
 };
 
 export type QuizQuestion = {
@@ -77,6 +90,7 @@ const free: Seed[] = [
       {
         title: "Tap their name, then the camera",
         body: "Tap the name of the person you want to call. Then tap the camera button, which looks like a small video camera.",
+        example: "video-call",
       },
       {
         title: "Say hello, then finish",
@@ -92,6 +106,7 @@ const free: Seed[] = [
       {
         title: "Look at who sent it",
         body: "A trick email often comes from a long, strange address instead of a name you know. Tap the sender's name to see the full address.",
+        example: "fraud-email",
       },
       {
         title: "Check how it greets you",
@@ -123,6 +138,7 @@ const free: Seed[] = [
       {
         title: "Check the amount and the name",
         body: "Read the company name and the amount out loud. Make sure the name is exactly right before you go on.",
+        example: "bill-payment",
       },
       {
         title: "Confirm, then keep the receipt",
@@ -146,6 +162,7 @@ const free: Seed[] = [
       {
         title: "Read the name letter by letter",
         body: "Fake sites add extra letters, like 'amazoon' or 'icici-bank'. Read the name slowly and compare it with what you expect.",
+        example: "website-address",
       },
       {
         title: "When in doubt, type it yourself",
@@ -161,6 +178,7 @@ const free: Seed[] = [
       {
         title: "Open your messages",
         body: "Tap your messages app and find the conversation with your grandchild. A small picture icon means a photo is waiting.",
+        example: "photo-message",
       },
       {
         title: "Tap the photo",
@@ -184,6 +202,7 @@ const free: Seed[] = [
       {
         title: "Know what the code is",
         body: "A short code arrives by message when you sign in or pay. It proves that it is really you. It is sometimes called an OTP.",
+        example: "otp-message",
       },
       {
         title: "Nobody real will ask for it",
@@ -207,6 +226,7 @@ const free: Seed[] = [
       {
         title: "A prize you did not enter for is not real",
         body: "Lotteries you never joined cannot be won. A message saying you have won is almost always a trick.",
+        example: "prize-sms",
       },
       {
         title: "Never pay to receive a prize",
@@ -230,6 +250,7 @@ const free: Seed[] = [
       {
         title: "Real offices do not demand money by phone",
         body: "Banks, police and government offices do not phone to demand an instant payment or a transfer to a 'safe account'.",
+        example: "caller-id",
       },
       {
         title: "Ask for their name and department",
@@ -253,6 +274,7 @@ const free: Seed[] = [
       {
         title: "Do not tap links from unknown numbers",
         body: "Even if the message looks friendly, a link from a number you do not know can install something harmful.",
+        example: "strange-link",
       },
       {
         title: "Check the app name and maker",
@@ -276,6 +298,7 @@ const free: Seed[] = [
       {
         title: "Scammers pretend to be family",
         body: "They may use a photo and a name you recognise, on a new number, saying their phone is broken.",
+        example: "family-in-trouble",
       },
       {
         title: "Call the person on their usual number",
@@ -427,8 +450,11 @@ export const lessons: Lesson[] = [
   })),
 ];
 
-export const freeLessons = lessons.filter((lesson) => !lesson.plus);
+export const freeLessons = lessons.filter(
+  (lesson) => !lesson.plus && !lesson.quiz,
+);
 export const plusLessons = lessons.filter((lesson) => lesson.plus);
+export const quizLesson = lessons.find((lesson) => lesson.quiz);
 
 export const getLesson = (slug: string) =>
   lessons.find((lesson) => lesson.slug === slug);

@@ -29,6 +29,18 @@ import {
   type Progress,
   type Question,
 } from "@/lib/store";
+import {
+  pushLearner,
+  pushLearnerName,
+  pushLearnerRemove,
+  pushLessonDone,
+  pushQuestion,
+  signInRemote,
+  signOutRemote,
+  signUpRemote,
+  syncFromRemote,
+} from "@/lib/sync";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 type AppState = {
   ready: boolean;
@@ -44,8 +56,8 @@ type AppState = {
 type AppContextValue = AppState & {
   signUp: (phone: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   signIn: (phone: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  signOut: () => void;
-  addLearner: (name: string) => void;
+  signOut: () => Promise<void>;
+  addLearner: (name: string) => Learner | null;
   renameLearner: (id: string, name: string) => void;
   removeLearner: (id: string) => void;
   selectLearner: (id: string) => void;
@@ -92,10 +104,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refresh();
+
     const onChange = () => refresh();
     window.addEventListener("gentlelearn:changed", onChange);
     window.addEventListener("storage", onChange);
+
+    let cancelled = false;
+    if (isSupabaseConfigured) {
+      syncFromRemote()
+        .then((phone) => {
+          if (!cancelled && phone) refresh();
+        })
+        .catch((error) => {
+          console.warn("GentleLearn sync failed:", error);
+        });
+    }
+
     return () => {
+      cancelled = true;
       window.removeEventListener("gentlelearn:changed", onChange);
       window.removeEventListener("storage", onChange);
     };
@@ -105,32 +131,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     () => ({
       ...state,
       signUp: async (phone, password) => {
-        const result = await createAccount(phone, password);
+        const result = isSupabaseConfigured
+          ? await signUpRemote(phone, password)
+          : await createAccount(phone, password);
+        if (result.ok && isSupabaseConfigured) {
+          await syncFromRemote();
+        }
         refresh();
         return result;
       },
       signIn: async (phone, password) => {
-        const result = await signInToStore(phone, password);
+        const result = isSupabaseConfigured
+          ? await signInRemote(phone, password)
+          : await signInToStore(phone, password);
+        if (result.ok && isSupabaseConfigured) {
+          await syncFromRemote();
+        }
         refresh();
         return result;
       },
-      signOut: () => {
+      signOut: async () => {
+        if (isSupabaseConfigured) {
+          try {
+            await signOutRemote();
+          } catch {
+            // The local session is still cleared below.
+          }
+        }
         signOutFromStore();
         refresh();
       },
       addLearner: (name) => {
-        if (!state.phone) return;
-        addLearnerToStore(state.phone, name);
+        if (!state.phone) return null;
+        const before = getLearners(state.phone).length;
+        const list = addLearnerToStore(state.phone, name);
+        const added =
+          list.length > before ? (list[list.length - 1] ?? null) : null;
+        if (added && isSupabaseConfigured) void pushLearner(added);
         refresh();
+        return added;
       },
       renameLearner: (id, name) => {
         if (!state.phone) return;
         renameLearnerInStore(state.phone, id, name);
+        if (isSupabaseConfigured) void pushLearnerName(id, name.trim());
         refresh();
       },
       removeLearner: (id) => {
         if (!state.phone) return;
         removeLearnerFromStore(state.phone, id);
+        if (isSupabaseConfigured) void pushLearnerRemove(id);
         refresh();
       },
       selectLearner: (id) => {
@@ -141,16 +191,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       completeLesson: (slug) => {
         if (!state.phone || !state.activeLearnerId) return;
         markLessonDone(state.phone, state.activeLearnerId, slug);
+        if (isSupabaseConfigured) {
+          const completedAt = getProgress(
+            state.phone,
+            state.activeLearnerId,
+          )[slug];
+          if (completedAt) {
+            void pushLessonDone(state.activeLearnerId, slug, completedAt);
+          }
+        }
         refresh();
       },
       askQuestion: (text) => {
         if (!state.phone || !state.activeLearner) return;
-        addQuestionToStore(
+        const questions = addQuestionToStore(
           state.phone,
           state.activeLearner.id,
           state.activeLearner.name,
           text,
         );
+        const added = questions[questions.length - 1];
+        if (added && isSupabaseConfigured) void pushQuestion(added);
         refresh();
       },
       chooseLanguage: (code) => {

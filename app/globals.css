@@ -20,14 +20,17 @@
   --color-amber-400: #f2b749;
   --color-amber-500: #eda13a;
 
-  --font-display: var(--font-baloo), ui-rounded, system-ui, sans-serif;
-  --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-display: "Baloo 2 Variable", ui-rounded, system-ui, sans-serif;
+  --font-body: "Nunito Variable", ui-rounded, system-ui, sans-serif;
 
   --radius-4xl: 2rem;
 }
 
 @layer base {
   html {
+    /* 18px base instead of 16px. Every rem-based size on the site grows
+       with it, which keeps the layout balanced and the text comfortable. */
+    font-size: 112.5%;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -35,8 +38,8 @@
     background-color: var(--color-sand-50);
     color: var(--color-cocoa-800);
     font-family: var(--font-body);
-    font-size: 1.125rem;
-    line-height: 1.6;
+    font-size: 1.2rem;
+    line-height: 1.65;
   }
 
   h1,

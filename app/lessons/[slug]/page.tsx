@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { Button, Card, LinkButton, cx } from "@/components/ui";
+import { StepExample } from "@/components/lesson-examples";
 import { getLesson } from "@/lib/lessons";
 
 const voiceLocales: Record<string, string> = {
@@ -21,6 +22,27 @@ const voiceLocales: Record<string, string> = {
   or: "or-IN",
   en: "en-IN",
 };
+
+/** Pick the warmest voice the device already has installed. */
+function pickBrowserVoice(language: string) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  const locale = (voiceLocales[language] ?? "en-IN").toLowerCase();
+  const short = locale.split("-")[0];
+  const voices = window.speechSynthesis.getVoices();
+  const matches = voices.filter((voice) => {
+    const lang = voice.lang.toLowerCase().replace("_", "-");
+    return lang === locale || lang.startsWith(`${short}-`);
+  });
+  return (
+    matches.find((voice) =>
+      /natural|neural|premium|enhanced|google|samantha|sonia|karen|moira|rishi|veena/i.test(
+        voice.name,
+      ),
+    ) ??
+    matches[0] ??
+    null
+  );
+}
 
 export default function LessonPage() {
   const params = useParams<{ slug: string }>();
@@ -41,15 +63,35 @@ export default function LessonPage() {
   const [picked, setPicked] = useState<number | null>(null);
   const [correct, setCorrect] = useState(0);
   const [speaking, setSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechId = useRef(0);
 
   useEffect(() => {
     if (ready && !phone) router.replace("/login");
   }, [ready, phone, router]);
 
+  function stopSpeaking() {
+    speechId.current += 1;
+    const player = audioRef.current;
+    if (player) {
+      player.pause();
+      audioRef.current = null;
+    }
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+  }
+
+  useEffect(() => {
+    stopSpeaking();
+    setSpeaking(false);
+    // Stop any voice when the learner moves to another step or question.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, question, finished]);
+
   useEffect(() => {
     return () => {
-      if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+      stopSpeaking();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!ready || !phone) {
@@ -91,20 +133,76 @@ export default function LessonPage() {
   const currentQuestion = isQuiz ? lesson.quiz![question] : null;
   const percent = finished ? 100 : Math.round(((isQuiz ? question : step) / total) * 100);
 
-  function speak(text: string) {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+  async function speak(text: string) {
     if (speaking) {
-      window.speechSynthesis.cancel();
+      stopSpeaking();
       setSpeaking(false);
       return;
     }
+
+    stopSpeaking();
+    const requestId = speechId.current;
+    setSpeaking(true);
+
+    // Prefer the configured human voice on the server.
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, lang: language }),
+      });
+
+      if (requestId !== speechId.current) return;
+
+      if (
+        response.ok &&
+        response.headers.get("content-type")?.startsWith("audio")
+      ) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const player = new Audio(url);
+        audioRef.current = player;
+        player.onended = () => {
+          setSpeaking(false);
+          URL.revokeObjectURL(url);
+          audioRef.current = null;
+        };
+        player.onerror = () => {
+          setSpeaking(false);
+          URL.revokeObjectURL(url);
+          audioRef.current = null;
+        };
+        await player.play();
+        return;
+      }
+    } catch {
+      // Fall through to the browser voice.
+    }
+
+    if (requestId !== speechId.current) return;
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setSpeaking(false);
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = voiceLocales[language] ?? "en-IN";
-    utterance.rate = 0.9;
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    setSpeaking(true);
-    window.speechSynthesis.cancel();
+    const voice = pickBrowserVoice(language);
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
+    const safety = window.setTimeout(
+      () => setSpeaking(false),
+      Math.max(8000, text.length * 110),
+    );
+    utterance.onend = () => {
+      window.clearTimeout(safety);
+      setSpeaking(false);
+    };
+    utterance.onerror = () => {
+      window.clearTimeout(safety);
+      setSpeaking(false);
+    };
     window.speechSynthesis.speak(utterance);
   }
 
@@ -176,7 +274,7 @@ export default function LessonPage() {
                 />
               </div>
 
-              <h2 className="mt-5 text-2xl text-cocoa-800">
+              <h2 className="mt-5 text-2xl text-cocoa-800 sm:text-3xl">
                 {currentQuestion.question}
               </h2>
 
@@ -198,7 +296,7 @@ export default function LessonPage() {
                           }
                         }}
                         className={cx(
-                          "w-full rounded-2xl border-2 px-5 py-4 text-left text-lg font-semibold transition-colors",
+                          "w-full rounded-2xl border-2 px-5 py-4 text-left text-xl font-semibold transition-colors",
                           !showResult &&
                             "border-sand-200 bg-white text-cocoa-800 hover:border-sand-300 hover:bg-sand-100",
                           showResult &&
@@ -284,9 +382,13 @@ export default function LessonPage() {
               <h2 className="mt-6 text-2xl text-cocoa-800 sm:text-3xl">
                 {currentStep.title}
               </h2>
-              <p className="mt-3 rounded-2xl bg-sand-100 px-5 py-4 text-xl leading-relaxed text-cocoa-800">
+              <p className="mt-3 rounded-2xl bg-sand-100 px-5 py-4 text-2xl leading-relaxed text-cocoa-800">
                 {currentStep.body}
               </p>
+
+              {currentStep.example ? (
+                <StepExample kind={currentStep.example} />
+              ) : null}
 
               <div className="mt-7 flex items-center justify-between gap-3">
                 <Button

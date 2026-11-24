@@ -30,7 +30,7 @@ export default function AccountPage() {
     <div className="mx-auto max-w-2xl px-5 pt-8 pb-16">
       <PageTitle
         title="Your account"
-        subtitle="One account for your family. It is saved on this device."
+        subtitle="One account for your family, kept private and safe."
       />
 
       <Card className="mt-8">
@@ -101,14 +101,14 @@ export default function AccountPage() {
       <Card className="mt-6">
         <h2 className="text-xl text-cocoa-800">Signing out</h2>
         <p className="mt-1 text-cocoa-700">
-          Your lessons stay saved on this device. You can sign back in with your
-          phone number and password.
+          Your lessons stay saved. You can sign back in with your phone number
+          and password.
         </p>
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => {
-            signOut();
+          onClick={async () => {
+            await signOut();
             router.push("/welcome");
           }}
         >
