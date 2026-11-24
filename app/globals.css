@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-sand-50: #fdf9f0;
+  --color-sand-100: #faf1df;
+  --color-sand-200: #f4e3c3;
+  --color-sand-300: #ecd3a6;
+
+  --color-cocoa-500: #6d5a48;
+  --color-cocoa-600: #5c4a3a;
+  --color-cocoa-700: #4a3b2e;
+  --color-cocoa-800: #33281f;
+
+  --color-forest-400: #4e9370;
+  --color-forest-500: #3f7d5e;
+  --color-forest-600: #33684e;
+  --color-forest-700: #2a5641;
+
+  --color-amber-300: #f7cf83;
+  --color-amber-400: #f2b749;
+  --color-amber-500: #eda13a;
+
+  --font-display: var(--font-baloo), ui-rounded, system-ui, sans-serif;
+  --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+
+  --radius-4xl: 2rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-sand-50);
+    color: var(--color-cocoa-800);
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-forest-500);
+    outline-offset: 3px;
+  }
+}
+
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+/* Gentle entrance for cards so the site feels calm rather than snappy. */
+@keyframes gentle-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: gentle-rise 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}
