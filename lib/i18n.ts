@@ -10,6 +10,7 @@ import { paLessons, paUi } from "@/lib/locales/pa";
 import { orLessons, orUi } from "@/lib/locales/or";
 import { asLessons, asUi } from "@/lib/locales/as";
 import { siteDictionaries } from "@/lib/locales/site";
+import { exampleDictionaries } from "@/lib/locales/examples";
 
 export type Locale =
   | "en"
@@ -39,7 +40,8 @@ export function translate(
 ): string {
   const dict = uiDictionaries[locale as Locale];
   const extra = siteDictionaries[locale as Locale];
-  let out = dict?.[text] ?? extra?.[text] ?? text;
+  const example = exampleDictionaries[locale as Locale];
+  let out = dict?.[text] ?? extra?.[text] ?? example?.[text] ?? text;
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       out = out.split(`{${key}}`).join(String(value));
