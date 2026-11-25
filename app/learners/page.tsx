@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { Bunny, LinkButton, cx } from "@/components/ui";
 import { freeLessons } from "@/lib/lessons";
 import { getProgress } from "@/lib/store";
@@ -18,6 +19,7 @@ const avatarStyles = [
 export default function LearnersPage() {
   const router = useRouter();
   const { ready, phone, learners, selectLearner } = useApp();
+  const t = useT();
 
   useEffect(() => {
     if (ready && !phone) router.replace("/login");
@@ -32,21 +34,21 @@ export default function LearnersPage() {
       <div className="text-center">
         <Bunny className="mx-auto h-24 w-24" />
         <h1 className="mt-5 text-4xl text-cocoa-800 sm:text-5xl">
-          Who is learning today?
+          {t("Who is learning today?")}
         </h1>
         <p className="mx-auto mt-3 max-w-md text-lg text-cocoa-700">
-          Tap your name. Your lessons and progress are kept just for you.
+          {t("Tap your name. Your lessons and progress are kept just for you.")}
         </p>
       </div>
 
       {learners.length === 0 ? (
         <div className="mt-10 rounded-[2rem] border-2 border-dashed border-sand-300 bg-white px-6 py-10 text-center">
-          <p className="text-xl font-bold text-cocoa-800">No names yet</p>
+          <p className="text-xl font-bold text-cocoa-800">{t("No names yet")}</p>
           <p className="mt-2 text-cocoa-700">
-            A family member can add the first learner in the Family corner.
+            {t("A family member can add the first learner in the Family corner.")}
           </p>
           <LinkButton href="/family" className="mt-6" size="lg">
-            Go to the Family corner
+            {t("Go to the Family corner")}
           </LinkButton>
         </div>
       ) : (
@@ -81,8 +83,10 @@ export default function LearnersPage() {
                     </span>
                     <span className="mt-1 block text-sm font-semibold text-cocoa-600">
                       {done === 0
-                        ? "Ready for the first lesson"
-                        : `${done} lesson${done === 1 ? "" : "s"} finished`}
+                        ? t("Ready for the first lesson")
+                        : done === 1
+                          ? t("1 lesson finished")
+                          : t("{n} lessons finished", { n: done })}
                     </span>
                     <span className="mt-2 block h-2 w-full overflow-hidden rounded-full bg-sand-200">
                       <span
@@ -113,10 +117,10 @@ export default function LearnersPage() {
               </span>
               <span>
                 <span className="display block text-xl font-bold text-cocoa-800">
-                  Add someone new
+                  {t("Add someone new")}
                 </span>
                 <span className="mt-1 block text-sm font-semibold text-cocoa-600">
-                  A family member can set this up
+                  {t("A family member can set this up")}
                 </span>
               </span>
             </Link>

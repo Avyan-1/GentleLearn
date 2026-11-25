@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
 import { formatPhone, languages } from "@/lib/store";
 
@@ -17,6 +18,7 @@ export default function AccountPage() {
     chooseLanguage,
     signOut,
   } = useApp();
+  const t = useT();
 
   useEffect(() => {
     if (ready && !phone) router.replace("/login");
@@ -29,31 +31,31 @@ export default function AccountPage() {
   return (
     <div className="mx-auto max-w-2xl px-5 pt-8 pb-16">
       <PageTitle
-        title="Your account"
-        subtitle="One account for your family, kept private and safe."
+        title={t("Your account")}
+        subtitle={t("One account for your family, kept private and safe.")}
       />
 
       <Card className="mt-8">
         <dl className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <dt className="font-bold text-cocoa-700">Phone number</dt>
+            <dt className="font-bold text-cocoa-700">{t("Phone number")}</dt>
             <dd className="text-lg font-bold text-cocoa-800">
               +91 {formatPhone(phone)}
             </dd>
           </div>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <dt className="font-bold text-cocoa-700">Plan</dt>
+            <dt className="font-bold text-cocoa-700">{t("Plan")}</dt>
             <dd>
               <span className="rounded-full bg-sand-100 px-3 py-1 font-bold text-cocoa-700">
-                Free — your current plan
+                {t("Free — your current plan")}
               </span>
             </dd>
           </div>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <dt className="font-bold text-cocoa-700">Learners</dt>
+            <dt className="font-bold text-cocoa-700">{t("Learners")}</dt>
             <dd className="text-cocoa-800">
               {learners.length === 0
-                ? "None yet"
+                ? t("None yet")
                 : learners.map((learner) => learner.name).join(", ")}
             </dd>
           </div>
@@ -61,18 +63,18 @@ export default function AccountPage() {
 
         <div className="mt-6 flex flex-wrap gap-3">
           <LinkButton href="/family" variant="outline">
-            Family corner
+            {t("Family corner")}
           </LinkButton>
           <LinkButton href="/plans" variant="outline">
-            See plans
+            {t("See plans")}
           </LinkButton>
         </div>
       </Card>
 
       <Card className="mt-6">
-        <h2 className="text-xl text-cocoa-800">Language</h2>
+        <h2 className="text-xl text-cocoa-800">{t("Language")}</h2>
         <p className="mt-1 text-cocoa-700">
-          Tap one — you can change it anytime.
+          {t("Tap one — you can change it anytime.")}
         </p>
         <ul className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {languages.map((item) => (
@@ -99,10 +101,11 @@ export default function AccountPage() {
       </Card>
 
       <Card className="mt-6">
-        <h2 className="text-xl text-cocoa-800">Signing out</h2>
+        <h2 className="text-xl text-cocoa-800">{t("Signing out")}</h2>
         <p className="mt-1 text-cocoa-700">
-          Your lessons stay saved. You can sign back in with your phone number
-          and password.
+          {t(
+            "Your lessons stay saved. You can sign back in with your phone number and password.",
+          )}
         </p>
         <Button
           variant="outline"
@@ -112,12 +115,12 @@ export default function AccountPage() {
             router.push("/welcome");
           }}
         >
-          Sign out
+          {t("Sign out")}
         </Button>
         <p className="mt-4 text-sm text-cocoa-600">
-          Need help?{" "}
+          {t("Need help?")}{" "}
           <Link href="/help" className="font-semibold underline underline-offset-4">
-            Read the sign-in guide
+            {t("Read the sign-in guide")}
           </Link>
           .
         </p>

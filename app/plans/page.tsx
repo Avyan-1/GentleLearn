@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/i18n";
 import { LinkButton, PageTitle } from "@/components/ui";
 
 const plans = [
@@ -50,6 +53,8 @@ const plans = [
 ];
 
 export default function PlansPage() {
+  const t = useT();
+
   return (
     <div className="mx-auto max-w-5xl px-5 pt-10 pb-16">
       <div className="text-center">
@@ -58,8 +63,10 @@ export default function PlansPage() {
 
       <div className="mt-4">
         <PageTitle
-          title="Payment plans"
-          subtitle="A simple choice for your family. Free is yours today — nothing to pay."
+          title={t("Payment plans")}
+          subtitle={t(
+            "A simple choice for your family. Free is yours today — nothing to pay.",
+          )}
           center
         />
       </div>
@@ -71,17 +78,17 @@ export default function PlansPage() {
             className={`flex flex-col rounded-3xl border-2 bg-white p-6 ${plan.border}`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl text-cocoa-800">{plan.name}</h2>
+              <h2 className="text-2xl text-cocoa-800">{t(plan.name)}</h2>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-extrabold tracking-wide ${plan.badgeClass}`}
               >
-                {plan.badge}
+                {t(plan.badge)}
               </span>
             </div>
 
             <p className="mt-4 flex items-baseline gap-2">
               <span className="display text-4xl text-cocoa-800">{plan.price}</span>
-              <span className="font-semibold text-cocoa-600">{plan.cadence}</span>
+              <span className="font-semibold text-cocoa-600">{t(plan.cadence)}</span>
             </p>
 
             <ul className="mt-6 space-y-3">
@@ -93,7 +100,7 @@ export default function PlansPage() {
                   >
                     ✓
                   </span>
-                  <span className="font-semibold">{feature}</span>
+                  <span className="font-semibold">{t(feature)}</span>
                 </li>
               ))}
             </ul>
@@ -106,15 +113,15 @@ export default function PlansPage() {
                     disabled
                     className="min-h-14 w-full rounded-full bg-forest-600 px-6 text-lg font-bold text-white disabled:opacity-100"
                   >
-                    {plan.button}
+                    {t(plan.button)}
                   </button>
                   <p className="mt-3 text-center text-sm font-bold text-cocoa-600">
-                    Coming soon
+                    {t("Coming soon")}
                   </p>
                 </>
               ) : (
                 <div className="min-h-14 w-full rounded-full bg-sand-100 px-6 text-center text-lg leading-[3.5rem] font-bold text-cocoa-700">
-                  ✓ Your current plan
+                  {t("✓ Your current plan")}
                 </div>
               )}
             </div>
@@ -124,15 +131,16 @@ export default function PlansPage() {
 
       <div className="mt-10 text-center">
         <LinkButton href="/welcome" variant="outline" size="lg">
-          Back to home
+          {t("Back to home")}
         </LinkButton>
       </div>
 
       <p className="mt-6 text-center text-sm text-cocoa-600">
-        Payments are coming soon. No payment is taken today. Your current plan
-        stays the same.{" "}
+        {t(
+          "Payments are coming soon. No payment is taken today. Your current plan stays the same.",
+        )}{" "}
         <Link href="/help" className="font-semibold underline underline-offset-4">
-          Need help?
+          {t("Need help?")}
         </Link>
       </p>
     </div>

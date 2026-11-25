@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
+import { localizeLesson } from "@/lib/i18n";
 import { freeLessons } from "@/lib/lessons";
 import { getProgress } from "@/lib/store";
 
@@ -19,7 +21,9 @@ export default function FamilyPage() {
     removeLearner,
     selectLearner,
     questions,
+    language,
   } = useApp();
+  const t = useT();
 
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -39,12 +43,16 @@ export default function FamilyPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 pt-8 pb-16">
       <PageTitle
-        title="Family corner"
-        subtitle="A calm helper for the people who set things up. Only what's needed — no clutter."
+        title={t("Family corner")}
+        subtitle={t(
+          "A calm helper for the people who set things up. Only what's needed — no clutter.",
+        )}
       />
 
       <Card className="mt-8">
-        <h2 className="text-xl text-cocoa-800">Add a family member to learn</h2>
+        <h2 className="text-xl text-cocoa-800">
+          {t("Add a family member to learn")}
+        </h2>
         <form
           className="mt-4 flex flex-col gap-3 sm:flex-row"
           onSubmit={(event) => {
@@ -58,31 +66,32 @@ export default function FamilyPage() {
           }}
         >
           <label htmlFor="learner" className="sr-only">
-            Their name
+            {t("Their name")}
           </label>
           <input
             id="learner"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Type their name, e.g. Mary"
+            placeholder={t("Type their name, e.g. Mary")}
             className="min-h-14 flex-1 rounded-2xl border-2 border-sand-300 bg-white px-4 text-lg text-cocoa-800 outline-none placeholder:text-cocoa-500/60 focus:border-forest-500"
           />
           <Button type="submit" disabled={!name.trim()} className="sm:w-32">
-            Add
+            {t("Add")}
           </Button>
         </form>
 
         {added ? (
           <div className="mt-5 rounded-2xl border-2 border-forest-500 bg-forest-500/10 p-5">
             <p className="display text-xl text-cocoa-800">
-              {added.name} is ready to learn
+              {t("{name} is ready to learn", { name: added.name })}
             </p>
             <p className="mt-1 text-cocoa-700">
-              Their lessons are set up. Tap below and the first lesson is one tap
-              away.
+              {t(
+                "Their lessons are set up. Tap below and the first lesson is one tap away.",
+              )}
             </p>
             <LinkButton href="/lessons" className="mt-4" size="lg">
-              Start learning as {added.name}
+              {t("Start learning as {name}", { name: added.name })}
             </LinkButton>
           </div>
         ) : null}
@@ -90,7 +99,7 @@ export default function FamilyPage() {
 
       {learners.length === 0 ? (
         <p className="mt-6 text-lg text-cocoa-700">
-          No learners yet. Add the first name above.
+          {t("No learners yet. Add the first name above.")}
         </p>
       ) : (
         <ul className="mt-6 space-y-4">
@@ -117,7 +126,10 @@ export default function FamilyPage() {
                       <div>
                         <h3 className="text-2xl text-cocoa-800">{learner.name}</h3>
                         <p className="text-sm font-semibold text-cocoa-600">
-                          {done} of {freeLessons.length} free lessons finished
+                          {t("{done} of {total} free lessons finished", {
+                            done,
+                            total: freeLessons.length,
+                          })}
                         </p>
                       </div>
                     </div>
@@ -132,7 +144,7 @@ export default function FamilyPage() {
                         }}
                       >
                         <label htmlFor={`rename-${learner.id}`} className="sr-only">
-                          New name
+                          {t("New name")}
                         </label>
                         <input
                           id={`rename-${learner.id}`}
@@ -141,7 +153,7 @@ export default function FamilyPage() {
                           className="min-h-11 w-40 rounded-xl border-2 border-sand-300 px-3 text-lg outline-none focus:border-forest-500"
                         />
                         <Button type="submit" className="min-h-11 px-4 text-base">
-                          Save
+                          {t("Save")}
                         </Button>
                         <Button
                           type="button"
@@ -149,7 +161,7 @@ export default function FamilyPage() {
                           className="min-h-11 px-3 text-base"
                           onClick={() => setEditing(null)}
                         >
-                          Cancel
+                          {t("Cancel")}
                         </Button>
                       </form>
                     ) : (
@@ -162,14 +174,16 @@ export default function FamilyPage() {
                           }}
                           className="font-semibold text-cocoa-700 underline underline-offset-4"
                         >
-                          Change name
+                          {t("Change name")}
                         </button>
                         <button
                           type="button"
                           onClick={() => {
                             if (
                               window.confirm(
-                                `Remove ${learner.name}? Their progress will be deleted.`,
+                                t("Remove {name}? Their progress will be deleted.", {
+                                  name: learner.name,
+                                }),
                               )
                             ) {
                               removeLearner(learner.id);
@@ -177,7 +191,7 @@ export default function FamilyPage() {
                           }}
                           className="font-semibold text-red-600 underline underline-offset-4"
                         >
-                          Remove
+                          {t("Remove")}
                         </button>
                       </div>
                     )}
@@ -193,7 +207,7 @@ export default function FamilyPage() {
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     {activeLearnerId === learner.id ? (
                       <span className="rounded-full bg-forest-500/15 px-3 py-1 text-sm font-bold text-forest-700">
-                        Learning as {learner.name}
+                        {t("Learning as {name}", { name: learner.name })}
                       </span>
                     ) : (
                       <Button
@@ -201,7 +215,7 @@ export default function FamilyPage() {
                         className="min-h-11 px-4 text-base"
                         onClick={() => selectLearner(learner.id)}
                       >
-                        Learn as {learner.name}
+                        {t("Learn as {name}", { name: learner.name })}
                       </Button>
                     )}
 
@@ -211,13 +225,13 @@ export default function FamilyPage() {
                       className="min-h-11 px-3 text-base"
                       onClick={() => selectLearner(learner.id)}
                     >
-                      Open lessons →
+                      {t("Open lessons →")}
                     </LinkButton>
                   </div>
 
                   <details className="group mt-4 rounded-2xl border-2 border-sand-200">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-bold text-cocoa-800 hover:bg-sand-50 [&::-webkit-details-marker]:hidden">
-                      <span>See lesson progress</span>
+                      <span>{t("See lesson progress")}</span>
                       <span className="flex items-center gap-2 text-sm font-semibold text-cocoa-600">
                         {done}/{freeLessons.length}
                         <span
@@ -240,7 +254,7 @@ export default function FamilyPage() {
                             className="flex items-center justify-between gap-3 rounded-xl bg-sand-100 px-4 py-2.5"
                           >
                             <span className="font-semibold text-cocoa-800">
-                              {lesson.title}
+                              {localizeLesson(lesson, language).title}
                             </span>
                             <span
                               className={cx(
@@ -248,7 +262,7 @@ export default function FamilyPage() {
                                 finished ? "text-forest-700" : "text-cocoa-600",
                               )}
                             >
-                              {finished ? "Finished" : "Not started"}
+                              {finished ? t("Finished") : t("Not started")}
                             </span>
                           </li>
                         );
@@ -264,12 +278,12 @@ export default function FamilyPage() {
 
       <section className="mt-10">
         <h2 className="text-2xl text-cocoa-800 sm:text-3xl">
-          Questions from learners
+          {t("Questions from learners")}
         </h2>
 
         {questions.length === 0 ? (
           <p className="mt-3 text-lg text-cocoa-700">
-            No questions yet. They will appear here when a learner asks one.
+            {t("No questions yet. They will appear here when a learner asks one.")}
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
@@ -278,7 +292,7 @@ export default function FamilyPage() {
                 <Card className="p-5">
                   <p className="text-lg text-cocoa-800">{question.text}</p>
                   <p className="mt-2 text-sm font-semibold text-cocoa-600">
-                    From {question.learnerName}
+                    {t("From {name}", { name: question.learnerName })}
                   </p>
                 </Card>
               </li>
@@ -288,14 +302,15 @@ export default function FamilyPage() {
 
         <div className="mt-4">
           <LinkButton href="/ask" variant="outline">
-            Ask a question
+            {t("Ask a question")}
           </LinkButton>
         </div>
       </section>
 
       <p className="mt-10 text-cocoa-600">
-        Everything here is private to your family and only used to keep lessons
-        personal.
+        {t(
+          "Everything here is private to your family and only used to keep lessons personal.",
+        )}
       </p>
     </div>
   );

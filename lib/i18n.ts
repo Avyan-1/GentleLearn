@@ -1,4 +1,15 @@
 import type { Lesson } from "@/lib/lessons";
+import { bnLessons, bnUi } from "@/lib/locales/bn";
+import { taLessons, taUi } from "@/lib/locales/ta";
+import { teLessons, teUi } from "@/lib/locales/te";
+import { mrLessons, mrUi } from "@/lib/locales/mr";
+import { guLessons, guUi } from "@/lib/locales/gu";
+import { knLessons, knUi } from "@/lib/locales/kn";
+import { mlLessons, mlUi } from "@/lib/locales/ml";
+import { paLessons, paUi } from "@/lib/locales/pa";
+import { orLessons, orUi } from "@/lib/locales/or";
+import { asLessons, asUi } from "@/lib/locales/as";
+import { siteDictionaries } from "@/lib/locales/site";
 
 export type Locale =
   | "en"
@@ -27,7 +38,8 @@ export function translate(
   params?: Record<string, string | number>,
 ): string {
   const dict = uiDictionaries[locale as Locale];
-  let out = dict?.[text] ?? text;
+  const extra = siteDictionaries[locale as Locale];
+  let out = dict?.[text] ?? extra?.[text] ?? text;
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       out = out.split(`{${key}}`).join(String(value));
@@ -234,30 +246,19 @@ const hi: UiDict = {
     "सर्वर तक नहीं पहुँच सके। अपना कनेक्शन जाँचें।",
 };
 
-const bn: UiDict = {};
-const ta: UiDict = {};
-const te: UiDict = {};
-const mr: UiDict = {};
-const gu: UiDict = {};
-const kn: UiDict = {};
-const ml: UiDict = {};
-const pa: UiDict = {};
-const or: UiDict = {};
-const as: UiDict = {};
-
 export const uiDictionaries: Record<Locale, UiDict> = {
   en: {},
   hi,
-  bn,
-  ta,
-  te,
-  mr,
-  gu,
-  kn,
-  ml,
-  pa,
-  or,
-  as,
+  bn: bnUi,
+  ta: taUi,
+  te: teUi,
+  mr: mrUi,
+  gu: guUi,
+  kn: knUi,
+  ml: mlUi,
+  pa: paUi,
+  or: orUi,
+  as: asUi,
 };
 
 /* ------------------------------------------------------------------------- */
@@ -535,14 +536,14 @@ const emptyPack: LessonPack = {};
 export const lessonTranslations: Record<Locale, LessonPack> = {
   en: emptyPack,
   hi: hiLessons,
-  bn: emptyPack,
-  ta: emptyPack,
-  te: emptyPack,
-  mr: emptyPack,
-  gu: emptyPack,
-  kn: emptyPack,
-  ml: emptyPack,
-  pa: emptyPack,
-  or: emptyPack,
-  as: emptyPack,
+  bn: bnLessons,
+  ta: taLessons,
+  te: teLessons,
+  mr: mrLessons,
+  gu: guLessons,
+  kn: knLessons,
+  ml: mlLessons,
+  pa: paLessons,
+  or: orLessons,
+  as: asLessons,
 };
