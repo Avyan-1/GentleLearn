@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { cx } from "@/components/ui";
 import { languages } from "@/lib/store";
 
@@ -16,6 +17,7 @@ function GlobeIcon() {
 
 export function LanguageMenu() {
   const { language, chooseLanguage } = useApp();
+  const t = useT();
   const details = useRef<HTMLDetailsElement>(null);
 
   const current =
@@ -35,7 +37,7 @@ export function LanguageMenu() {
 
       <div className="absolute top-full right-0 z-50 mt-2 max-h-[70vh] w-72 overflow-auto rounded-2xl border-2 border-sand-200 bg-white p-3 shadow-xl">
         <p className="px-1 pb-2 text-xs font-extrabold tracking-widest text-cocoa-600 uppercase">
-          Language
+          {t("Language")}
         </p>
         <ul className="grid grid-cols-2 gap-2">
           {languages.map((item) => (

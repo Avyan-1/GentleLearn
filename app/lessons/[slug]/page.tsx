@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { Button, Card, LinkButton, cx } from "@/components/ui";
 import { StepExample } from "@/components/lesson-examples";
 import { getLesson } from "@/lib/lessons";
+import { localizeLesson } from "@/lib/i18n";
 
 const voiceLocales: Record<string, string> = {
   hi: "hi-IN",
@@ -56,7 +58,11 @@ export default function LessonPage() {
     language,
   } = useApp();
 
-  const lesson = useMemo(() => getLesson(params.slug), [params.slug]);
+  const lesson = useMemo(() => {
+    const found = getLesson(params.slug);
+    return found ? localizeLesson(found, language) : undefined;
+  }, [params.slug, language]);
+  const t = useT();
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
   const [question, setQuestion] = useState(0);
@@ -101,12 +107,14 @@ export default function LessonPage() {
   if (!lesson) {
     return (
       <div className="mx-auto max-w-xl px-5 pt-16 text-center">
-        <h1 className="text-3xl text-cocoa-800">We could not find that lesson</h1>
+        <h1 className="text-3xl text-cocoa-800">
+          {t("We could not find that lesson")}
+        </h1>
         <p className="mt-3 text-cocoa-700">
-          It may have moved. All lessons are on the Lessons page.
+          {t("It may have moved. All lessons are on the Lessons page.")}
         </p>
         <LinkButton href="/lessons" className="mt-6">
-          Back to lessons
+          {t("Back to lessons")}
         </LinkButton>
       </div>
     );
@@ -115,12 +123,12 @@ export default function LessonPage() {
   if (!activeLearner) {
     return (
       <div className="mx-auto max-w-xl px-5 pt-16 text-center">
-        <h1 className="text-3xl text-cocoa-800">Pick a name first</h1>
+        <h1 className="text-3xl text-cocoa-800">{t("Pick a name first")}</h1>
         <p className="mt-3 text-cocoa-700">
-          Choose who is learning today, then open the lesson again.
+          {t("Choose who is learning today, then open the lesson again.")}
         </p>
         <LinkButton href="/lessons" className="mt-6">
-          Choose a name
+          {t("Choose a name")}
         </LinkButton>
       </div>
     );
@@ -217,7 +225,7 @@ export default function LessonPage() {
         href="/lessons"
         className="inline-flex items-center gap-2 font-bold text-forest-700"
       >
-        <span aria-hidden="true">←</span> All lessons
+        <span aria-hidden="true">←</span> {t("All lessons")}
       </Link>
 
       <Card padded={false} className="mt-4 overflow-hidden">
@@ -228,7 +236,7 @@ export default function LessonPage() {
               {lesson.category}
             </span>
             <span className="text-white/85">
-              about {lesson.minutes} minute{lesson.minutes === 1 ? "" : "s"}
+              {t("about {n} minutes", { n: lesson.minutes })}
             </span>
           </div>
           <h1 className="mt-3 text-3xl text-white sm:text-4xl">{lesson.title}</h1>
@@ -237,14 +245,23 @@ export default function LessonPage() {
         <div className="px-5 py-6 sm:px-7">
           {finished ? (
             <div className="text-center">
-              <p className="display text-2xl text-forest-700">Well done!</p>
+              <p className="display text-2xl text-forest-700">
+                {t("Well done!")}
+              </p>
               <p className="mt-2 text-lg text-cocoa-700">
-                {activeLearner.name}, you finished{" "}
-                <strong className="text-cocoa-800">{lesson.title}</strong>.
-                {isQuiz ? ` You got ${correct} of ${total} right.` : ""}
+                {t("{name}, you finished {lesson}.", {
+                  name: activeLearner.name,
+                  lesson: lesson.title,
+                })}
+                {isQuiz
+                  ? ` ${t("You got {correct} of {total} right.", {
+                      correct,
+                      total,
+                    })}`
+                  : ""}
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <LinkButton href="/lessons">Back to lessons</LinkButton>
+                <LinkButton href="/lessons">{t("Back to lessons")}</LinkButton>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -255,7 +272,7 @@ export default function LessonPage() {
                     setCorrect(0);
                   }}
                 >
-                  Do it again
+                  {t("Do it again")}
                 </Button>
               </div>
             </div>
@@ -263,9 +280,9 @@ export default function LessonPage() {
             <div>
               <div className="flex items-center justify-between text-sm font-bold text-cocoa-600">
                 <span>
-                  Question {question + 1} of {total}
+                  {t("Question {a} of {b}", { a: question + 1, b: total })}
                 </span>
-                <span>{correct} right so far</span>
+                <span>{t("{n} right so far", { n: correct })}</span>
               </div>
               <div className="mt-2 h-2.5 rounded-full bg-sand-200">
                 <div
@@ -322,7 +339,9 @@ export default function LessonPage() {
               {picked !== null ? (
                 <div className="mt-5 rounded-2xl bg-sand-100 px-5 py-4">
                   <p className="font-bold text-cocoa-800">
-                    {picked === currentQuestion.answer ? "That's right." : "Not quite."}
+                    {picked === currentQuestion.answer
+                      ? t("That's right.")
+                      : t("Not quite.")}
                   </p>
                   <p className="mt-1 text-cocoa-700">{currentQuestion.why}</p>
                 </div>
@@ -337,7 +356,7 @@ export default function LessonPage() {
                     setPicked(null);
                   }}
                 >
-                  Back
+                  {t("Back")}
                 </Button>
                 <Button
                   disabled={picked === null}
@@ -350,7 +369,9 @@ export default function LessonPage() {
                     }
                   }}
                 >
-                  {question + 1 >= total ? "See my score" : "Next question"}
+                  {question + 1 >= total
+                    ? t("See my score")
+                    : t("Next question")}
                 </Button>
               </div>
             </div>
@@ -358,7 +379,7 @@ export default function LessonPage() {
             <div>
               <div className="flex items-center justify-between text-sm font-bold text-cocoa-600">
                 <span>
-                  Step {step + 1} of {total}
+                  {t("Step {a} of {b}", { a: step + 1, b: total })}
                 </span>
                 <button
                   type="button"
@@ -368,7 +389,7 @@ export default function LessonPage() {
                   className="inline-flex items-center gap-2 rounded-full border-2 border-sand-200 px-3 py-1 text-cocoa-700 hover:bg-sand-100"
                 >
                   <span aria-hidden="true">🔊</span>
-                  {speaking ? "Stop" : "Read this aloud"}
+                  {speaking ? t("Stop") : t("Read this aloud")}
                 </button>
               </div>
 
@@ -396,7 +417,7 @@ export default function LessonPage() {
                   disabled={step === 0}
                   onClick={() => setStep((value) => Math.max(0, value - 1))}
                 >
-                  Back
+                  {t("Back")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -407,19 +428,23 @@ export default function LessonPage() {
                     }
                   }}
                 >
-                  {step + 1 >= total ? "Finish lesson" : "Next step"}
+                  {step + 1 >= total
+                    ? t("Finish lesson")
+                    : t("Next step")}
                 </Button>
               </div>
             </div>
           ) : (
-            <p className="text-cocoa-700">This lesson has no steps yet.</p>
+            <p className="text-cocoa-700">
+              {t("This lesson has no steps yet.")}
+            </p>
           )}
         </div>
       </Card>
 
       {progress[lesson.slug] && !finished ? (
         <p className="mt-4 text-center text-sm font-semibold text-forest-700">
-          You have finished this lesson before. Doing it again is a good idea.
+          {t("You have finished this lesson before. Doing it again is a good idea.")}
         </p>
       ) : null}
     </div>

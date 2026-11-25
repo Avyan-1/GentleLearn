@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { cx } from "@/components/ui";
+import { localizeLesson } from "@/lib/i18n";
 import { categories, freeLessons, lessons, plusLessons, quizLesson } from "@/lib/lessons";
 
 function StatusPill({ done, plus }: { done: boolean; plus?: boolean }) {
+  const t = useT();
+
   return (
     <span
       className={cx(
@@ -19,7 +23,7 @@ function StatusPill({ done, plus }: { done: boolean; plus?: boolean }) {
             : "bg-sand-100 text-cocoa-700",
       )}
     >
-      {done ? "Done" : plus ? "Plus" : "Start"}
+      {done ? t("Done") : plus ? t("Plus") : t("Start")}
     </span>
   );
 }
@@ -72,7 +76,8 @@ function Group({
 
 export default function LessonsPage() {
   const router = useRouter();
-  const { ready, phone, activeLearner, progress } = useApp();
+  const { ready, phone, activeLearner, progress, language } = useApp();
+  const t = useT();
 
   useEffect(() => {
     if (ready && !phone) router.replace("/login");
@@ -94,13 +99,13 @@ export default function LessonsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-extrabold tracking-[0.14em] text-cocoa-600 uppercase">
-            Learning today
+            {t("Learning today")}
           </p>
           <h1 className="mt-1 text-4xl text-cocoa-800 sm:text-5xl">
-            Hi {activeLearner.name}
+            {t("Hi {name}", { name: activeLearner.name })}
           </h1>
           <p className="mt-2 max-w-lg text-lg text-cocoa-700">
-            Pick a lesson below. Everything is saved as you go.
+            {t("Pick a lesson below. Everything is saved as you go.")}
           </p>
         </div>
 
@@ -116,10 +121,10 @@ export default function LessonsPage() {
           </span>
           <span>
             <span className="block text-sm font-semibold text-white/85">
-              Not you, {activeLearner.name}?
+              {t("Not you, {name}?", { name: activeLearner.name })}
             </span>
             <span className="display block text-lg font-bold">
-              Switch learner
+              {t("Switch learner")}
             </span>
           </span>
         </Link>
@@ -128,10 +133,13 @@ export default function LessonsPage() {
       <div className="mt-6 rounded-3xl bg-sand-100 px-5 py-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="font-bold text-cocoa-800">
-            {freeDone} of {freeLessons.length} free lessons finished
+            {t("{done} of {total} free lessons finished", {
+              done: freeDone,
+              total: freeLessons.length,
+            })}
           </p>
           <p className="text-sm font-semibold text-cocoa-600">
-            {percent}% of the free course
+            {t("{percent}% of the free course", { percent })}
           </p>
         </div>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-white">
@@ -144,8 +152,8 @@ export default function LessonsPage() {
 
       <div className="mt-8 space-y-3">
         <Group
-          title="Start here"
-          subtitle="The 10 regular lessons — free forever"
+          title={t("Start here")}
+          subtitle={t("The 10 regular lessons — free forever")}
           done={freeDone}
           total={freeLessons.length}
           open
@@ -153,6 +161,7 @@ export default function LessonsPage() {
           <ul className="space-y-2">
             {freeLessons.map((lesson) => {
               const done = Boolean(progress[lesson.slug]);
+              const text = localizeLesson(lesson, language);
 
               return (
                 <li key={lesson.slug}>
@@ -167,12 +176,11 @@ export default function LessonsPage() {
                   >
                     <span className="min-w-0">
                       <span className="display block truncate text-lg font-bold text-cocoa-800">
-                        {lesson.title}
+                        {text.title}
                       </span>
                       <span className="block text-sm font-semibold text-cocoa-600">
-                        about {lesson.minutes} minute
-                        {lesson.minutes === 1 ? "" : "s"}
-                        {lesson.quiz ? " · quiz" : ""}
+                        {t("about {n} minutes", { n: lesson.minutes })}
+                        {lesson.quiz ? t(" · quiz") : ""}
                       </span>
                     </span>
                     <StatusPill done={done} />
@@ -196,10 +204,12 @@ export default function LessonsPage() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="display block text-xl font-bold text-cocoa-800">
-                Test yourself — {quizLesson.title}
+                {t("Test yourself — {title}", {
+                  title: localizeLesson(quizLesson, language).title,
+                })}
               </span>
               <span className="block text-sm font-semibold text-cocoa-700">
-                {quizLesson.summary}
+                {localizeLesson(quizLesson, language).summary}
               </span>
             </span>
             <span
@@ -210,17 +220,17 @@ export default function LessonsPage() {
                   : "bg-white text-cocoa-700",
               )}
             >
-              {progress[quizLesson.slug] ? "Done" : "Quiz"}
+              {progress[quizLesson.slug] ? t("Done") : t("Quiz")}
             </span>
           </Link>
         ) : null}
 
         <div className="flex items-baseline justify-between gap-3 px-2 pt-4">
           <h2 className="text-xl text-cocoa-800 sm:text-2xl">
-            More lessons with Plus
+            {t("More lessons with Plus")}
           </h2>
           <span className="text-sm font-bold text-cocoa-600">
-            {plusLessons.length} extra
+            {t("{n} extra", { n: plusLessons.length })}
           </span>
         </div>
 
@@ -233,8 +243,8 @@ export default function LessonsPage() {
           return (
             <Group
               key={category}
-              title={category}
-              subtitle={`${items.length} lessons in this group`}
+              title={t(category)}
+              subtitle={t("{n} lessons in this group", { n: items.length })}
               done={0}
               total={items.length}
             >

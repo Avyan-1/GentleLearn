@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/components/i18n";
 import { LanguageMenu } from "@/components/language-menu";
 import { Logo, cx } from "@/components/ui";
 
@@ -21,6 +22,8 @@ function NavLink({
   item: (typeof items)[number];
   active: boolean;
 }) {
+  const t = useT();
+
   return (
     <Link
       href={item.href}
@@ -32,8 +35,8 @@ function NavLink({
           : "text-cocoa-600 hover:bg-sand-200",
       )}
     >
-      <span className="sm:hidden">{item.short}</span>
-      <span className="hidden sm:inline">{item.label}</span>
+      <span className="sm:hidden">{t(item.short)}</span>
+      <span className="hidden sm:inline">{t(item.label)}</span>
     </Link>
   );
 }

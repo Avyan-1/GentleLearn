@@ -6,6 +6,7 @@ import {
   cacheQuestions,
   getActiveLearner,
   getLearners,
+  getProgress,
   setActiveLearner,
   setSessionPhone,
   type Learner,

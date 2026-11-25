@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { Bunny, Button, cx } from "@/components/ui";
 import { languages } from "@/lib/store";
 
@@ -11,6 +12,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const { signIn, signUp, phone, ready, chooseLanguage, language } = useApp();
+  const t = useT();
 
   const [mode, setMode] = useState<"create" | "signin">(
     params.get("mode") === "signin" ? "signin" : "create",
@@ -54,12 +56,12 @@ function LoginForm() {
       <div className="text-center">
         <Bunny className="mx-auto h-24 w-24" />
         <h1 className="mt-5 text-4xl text-cocoa-800 sm:text-5xl">
-          {mode === "create" ? "Create your account" : "Welcome back"}
+          {mode === "create" ? t("Create your account") : t("Welcome back")}
         </h1>
         <p className="mx-auto mt-4 max-w-md text-lg text-cocoa-700">
           {mode === "create"
-            ? "Use your phone number and a password. One account for your family."
-            : "Type your phone number and password to sign in."}
+            ? t("Use your phone number and a password. One account for your family.")
+            : t("Type your phone number and password to sign in.")}
         </p>
       </div>
 
@@ -69,7 +71,7 @@ function LoginForm() {
             htmlFor="phone"
             className="mb-2 block text-lg font-bold text-cocoa-800"
           >
-            Phone number
+            {t("Phone number")}
           </label>
           <div className="flex items-center gap-2 rounded-2xl border-2 border-sand-300 bg-white px-4 py-1 focus-within:border-forest-500">
             <span className="text-lg font-bold text-cocoa-700">+91</span>
@@ -93,7 +95,7 @@ function LoginForm() {
             htmlFor="password"
             className="mb-2 block text-lg font-bold text-cocoa-800"
           >
-            Password
+            {t("Password")}
           </label>
           <input
             id="password"
@@ -113,7 +115,7 @@ function LoginForm() {
               htmlFor="confirm"
               className="mb-2 block text-lg font-bold text-cocoa-800"
             >
-              Type your password again
+              {t("Type your password again")}
             </label>
             <input
               id="confirm"
@@ -133,16 +135,16 @@ function LoginForm() {
             role="alert"
             className="rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 font-semibold text-red-600"
           >
-            {error}
+            {t(error)}
           </p>
         ) : null}
 
         <Button type="submit" size="lg" block disabled={busy}>
           {busy
-            ? "One moment…"
+            ? t("One moment…")
             : mode === "create"
-              ? "Create my account"
-              : "Sign in"}
+              ? t("Create my account")
+              : t("Sign in")}
         </Button>
       </form>
 
@@ -156,24 +158,24 @@ function LoginForm() {
           className="text-lg font-semibold text-cocoa-800 underline underline-offset-4"
         >
           {mode === "create"
-            ? "Already have an account? Sign in"
-            : "New here? Create my account"}
+            ? t("Already have an account? Sign in")
+            : t("New here? Create my account")}
         </button>
 
         <p className="mt-5 text-cocoa-700">
-          Your account is kept private and safe.
+          {t("Your account is kept private and safe.")}
         </p>
 
         <p className="mt-4">
           <Link href="/help" className="font-semibold underline underline-offset-4">
-            Help
+            {t("Help")}
           </Link>
         </p>
       </div>
 
       <details className="mt-8 rounded-2xl border-2 border-sand-200 bg-white px-4 py-3">
         <summary className="cursor-pointer font-bold text-cocoa-800">
-          Language:{" "}
+          {t("Language")}:{" "}
           {languages.find((item) => item.code === language)?.label ?? "English"}
         </summary>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
