@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useApp } from "@/components/app-provider";
+import { useT } from "@/components/i18n";
 import { Bunny, cx } from "@/components/ui";
 import { languages } from "@/lib/store";
 
 export default function ChooseLanguagePage() {
   const router = useRouter();
   const { ready, phone, language, chooseLanguage } = useApp();
+  const t = useT();
 
   useEffect(() => {
     if (ready && !phone) router.replace("/welcome");
@@ -25,10 +27,10 @@ export default function ChooseLanguagePage() {
       </div>
 
       <h1 className="mt-6 text-3xl text-forest-700 sm:text-4xl">
-        Choose your language
+        {t("Choose your language")}
       </h1>
       <p className="mt-2 text-lg text-cocoa-700">
-        Tap one — you can change it anytime.
+        {t("Tap one — you can change it anytime.")}
       </p>
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

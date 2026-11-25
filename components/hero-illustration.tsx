@@ -1,4 +1,10 @@
+"use client";
+
+import { useT } from "@/components/i18n";
+
 export function HeroIllustration({ className = "" }: { className?: string }) {
+  const t = useT();
+
   return (
     <svg
       viewBox="0 0 600 480"
@@ -42,7 +48,7 @@ export function HeroIllustration({ className = "" }: { className?: string }) {
         <circle cx="86" cy="129" r="16" fill="#f2b749" />
         <path d="M80 122v14l12-7z" fill="#33281f" />
         <text x="112" y="135" fontFamily="Nunito, system-ui, sans-serif" fontSize="18" fontWeight="700" fill="#33281f">
-          Read this aloud
+          {t("Read this aloud")}
         </text>
       </g>
 
@@ -50,12 +56,12 @@ export function HeroIllustration({ className = "" }: { className?: string }) {
       <g transform="rotate(4 470 300)">
         <rect x="398" y="266" width="164" height="72" rx="18" fill="#ffffff" stroke="#f4e3c3" strokeWidth="3" />
         <text x="416" y="294" fontFamily="Nunito, system-ui, sans-serif" fontSize="15" fontWeight="700" fill="#5c4a3a">
-          Step 2 of 4
+          {t("Step {a} of {b}", { a: 2, b: 4 })}
         </text>
         <rect x="416" y="304" width="128" height="10" rx="5" fill="#f4e3c3" />
         <rect x="416" y="304" width="64" height="10" rx="5" fill="#3f7d5e" />
         <text x="416" y="330" fontFamily="Nunito, system-ui, sans-serif" fontSize="13" fontWeight="700" fill="#2a5641">
-          Well done, Mary
+          {t("Well done!")}
         </text>
       </g>
 

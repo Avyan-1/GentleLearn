@@ -132,6 +132,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} की ओर से",
     "Everything here is private to your family and only used to keep lessons personal.":
       "यहाँ सब कुछ आपके परिवार के लिए निजी है और सिर्फ़ पाठों को व्यक्तिगत रखने के लिए इस्तेमाल होता है।",
+    "Choose your language":
+      "अपनी भाषा चुनें",
   },
 
   /* --------------------------------------------------------------------- */
@@ -256,6 +258,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name}-এর কাছ থেকে",
     "Everything here is private to your family and only used to keep lessons personal.":
       "এখানে সবকিছু আপনার পরিবারের জন্য গোপন এবং শুধু পাঠ ব্যক্তিগত রাখতে ব্যবহৃত হয়।",
+    "Choose your language":
+      "আপনার ভাষা বেছে নিন",
   },
 
   /* --------------------------------------------------------------------- */
@@ -381,6 +385,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} இடமிருந்து",
     "Everything here is private to your family and only used to keep lessons personal.":
       "இங்கே எல்லாம் உங்கள் குடும்பத்திற்குத் தனிப்பட்டது, பாடங்களை தனிப்பட்டதாக வைக்க மட்டுமே பயன்படுத்தப்படுகிறது.",
+    "Choose your language":
+      "உங்கள் மொழியைத் தேர்ந்தெடுங்கள்",
   },
 
   /* --------------------------------------------------------------------- */
@@ -506,6 +512,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} నుండి",
     "Everything here is private to your family and only used to keep lessons personal.":
       "ఇక్కడ ప్రతిదీ మీ కుటుంబానికి గోప్యం, పాఠాలను వ్యక్తిగతంగా ఉంచడానికి మాత్రమే ఉపయోగించబడుతుంది.",
+    "Choose your language":
+      "మీ భాషను ఎంచుకోండి",
   },
 
   /* --------------------------------------------------------------------- */
@@ -631,6 +639,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} कडून",
     "Everything here is private to your family and only used to keep lessons personal.":
       "इथले सर्व तुमच्या कुटुंबासाठी खाजगी आहे आणि फक्त धडे वैयक्तिक ठेवण्यासाठी वापरले जाते.",
+    "Choose your language":
+      "तुमची भाषा निवडा",
   },
 
   /* --------------------------------------------------------------------- */
@@ -756,6 +766,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} તરફથી",
     "Everything here is private to your family and only used to keep lessons personal.":
       "અહીં બધું તમારા પરિવાર માટે ખાનગી છે અને ફક્ત પાઠ વ્યક્તિગત રાખવા વપરાય છે.",
+    "Choose your language":
+      "તમારી ભાષા પસંદ કરો",
   },
 
   /* --------------------------------------------------------------------- */
@@ -881,6 +893,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} ಅವರಿಂದ",
     "Everything here is private to your family and only used to keep lessons personal.":
       "ಇಲ್ಲಿನ ಎಲ್ಲವೂ ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ಖಾಸಗಿ ಮತ್ತು ಪಾಠಗಳನ್ನು ವೈಯಕ್ತಿಕವಾಗಿ ಇಡಲು ಮಾತ್ರ ಬಳಸಲಾಗುತ್ತದೆ.",
+    "Choose your language":
+      "ನಿಮ್ಮ ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ",
   },
 
   /* --------------------------------------------------------------------- */
@@ -1006,6 +1020,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} ൽ നിന്ന്",
     "Everything here is private to your family and only used to keep lessons personal.":
       "ഇവിടെ എല്ലാം നിങ്ങളുടെ കുടുംബത്തിന് സ്വകാര്യമാണ്, പാഠങ്ങൾ വ്യക്തിഗതമാക്കാൻ മാത്രം ഉപയോഗിക്കുന്നു.",
+    "Choose your language":
+      "നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കൂ",
   },
 
   /* --------------------------------------------------------------------- */
@@ -1131,6 +1147,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} ਵੱਲੋਂ",
     "Everything here is private to your family and only used to keep lessons personal.":
       "ਇੱਥੇ ਸਭ ਕੁਝ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਲਈ ਨਿੱਜੀ ਹੈ ਅਤੇ ਸਿਰਫ਼ ਪਾਠ ਨਿੱਜੀ ਰੱਖਣ ਲਈ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ।",
+    "Choose your language":
+      "ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ",
   },
 
   /* --------------------------------------------------------------------- */
@@ -1256,6 +1274,8 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} ଙ୍କଠାରୁ",
     "Everything here is private to your family and only used to keep lessons personal.":
       "ଏଠାରେ ସବୁକିଛି ଆପଣଙ୍କ ପରିବାର ପାଇଁ ଗୋପନୀୟ ଏବଂ କେବଳ ପାଠକୁ ବ୍ୟକ୍ତିଗତ ରଖିବା ପାଇଁ ବ୍ୟବହୃତ ହୁଏ।",
+    "Choose your language":
+      "ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ",
   },
 
   /* --------------------------------------------------------------------- */
@@ -1381,5 +1401,7 @@ export const siteDictionaries: Record<Locale, UiDict> = {
     "From {name}": "{name} ৰ পৰা",
     "Everything here is private to your family and only used to keep lessons personal.":
       "ইয়াত সকলো আপোনাৰ পৰিয়ালৰ বাবে গোপনীয় আৰু কেৱল পাঠ ব্যক্তিগত ৰাখিবলৈ ব্যৱহাৰ হয়।",
+    "Choose your language":
+      "আপোনাৰ ভাষা বাছনি কৰক",
   },
 };
