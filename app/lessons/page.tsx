@@ -191,39 +191,74 @@ export default function LessonsPage() {
           </ul>
         </Group>
 
-        {quizLesson ? (
-          <Link
-            href={`/lessons/${quizLesson.slug}`}
-            className="flex items-center gap-4 rounded-3xl border-2 border-amber-400 bg-amber-300/25 px-5 py-4 transition-colors hover:bg-amber-300/40"
-          >
-            <span
-              aria-hidden="true"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-2xl text-cocoa-800"
+        {quizLesson ? (() => {
+          const completedFreeCount = freeLessons.filter((l) => Boolean(progress[l.slug])).length;
+          const totalFreeCount = freeLessons.length;
+          const quizUnlocked = completedFreeCount >= totalFreeCount;
+
+          if (!quizUnlocked) {
+            return (
+              <div
+                aria-disabled="true"
+                className="flex items-center gap-4 rounded-3xl border-2 border-cocoa-200 bg-cocoa-100/70 px-5 py-4 opacity-85"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cocoa-200 text-2xl text-cocoa-700"
+                >
+                  🔒
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="display block text-xl font-bold text-cocoa-700">
+                    {t("Test yourself — {title}", {
+                      title: localizeLesson(quizLesson, language).title,
+                    })}
+                  </span>
+                  <span className="block text-sm font-semibold text-cocoa-600">
+                    Complete all {totalFreeCount} free lessons to unlock ({completedFreeCount}/{totalFreeCount} done)
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full bg-white px-3 py-1 text-sm font-bold text-cocoa-600">
+                  Locked
+                </span>
+              </div>
+            );
+          }
+
+          return (
+            <Link
+              href={`/lessons/${quizLesson.slug}`}
+              className="flex items-center gap-4 rounded-3xl border-2 border-amber-400 bg-amber-300/25 px-5 py-4 transition-colors hover:bg-amber-300/40"
             >
-              ✓
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="display block text-xl font-bold text-cocoa-800">
-                {t("Test yourself — {title}", {
-                  title: localizeLesson(quizLesson, language).title,
-                })}
+              <span
+                aria-hidden="true"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-2xl text-cocoa-800"
+              >
+                ✓
               </span>
-              <span className="block text-sm font-semibold text-cocoa-700">
-                {localizeLesson(quizLesson, language).summary}
+              <span className="min-w-0 flex-1">
+                <span className="display block text-xl font-bold text-cocoa-800">
+                  {t("Test yourself — {title}", {
+                    title: localizeLesson(quizLesson, language).title,
+                  })}
+                </span>
+                <span className="block text-sm font-semibold text-cocoa-700">
+                  {localizeLesson(quizLesson, language).summary}
+                </span>
               </span>
-            </span>
-            <span
-              className={cx(
-                "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
-                progress[quizLesson.slug]
-                  ? "bg-forest-600 text-white"
-                  : "bg-white text-cocoa-700",
-              )}
-            >
-              {progress[quizLesson.slug] ? t("Done") : t("Quiz")}
-            </span>
-          </Link>
-        ) : null}
+              <span
+                className={cx(
+                  "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
+                  progress[quizLesson.slug]
+                    ? "bg-forest-600 text-white"
+                    : "bg-white text-cocoa-700",
+                )}
+              >
+                {progress[quizLesson.slug] ? t("Done") : t("Quiz")}
+              </span>
+            </Link>
+          );
+        })() : null}
 
         <div className="flex items-baseline justify-between gap-3 px-2 pt-4">
           <h2 className="text-xl text-cocoa-800 sm:text-2xl">

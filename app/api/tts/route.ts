@@ -1,175 +1,79 @@
 import { NextResponse } from "next/server";
+import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 
-export const runtime = "nodejs";
-
-type VoiceRequest = {
-  text?: string;
-  lang?: string;
-};
-
-const AZURE_VOICES: Record<string, string> = {
+const VOICE_MAP: Record<string, string> = {
+  en: "en-IN-NeerjaNeural",
   hi: "hi-IN-SwaraNeural",
   bn: "bn-IN-TanishaaNeural",
   ta: "ta-IN-PallaviNeural",
   te: "te-IN-ShrutiNeural",
+  kn: "kn-IN-SapnaNeural",
   mr: "mr-IN-AarohiNeural",
   gu: "gu-IN-DhwaniNeural",
-  kn: "kn-IN-SapnaNeural",
   ml: "ml-IN-SobhanaNeural",
-  pa: "pa-IN-OjaswiniNeural",
+  pa: "pa-IN-OjasNeural",
   or: "or-IN-SubhasiniNeural",
-  as: "as-IN-PriyomNeural",
-  en: "en-IN-NeerjaNeural",
+  as: "as-IN-YashicaNeural",
 };
 
-const audioResponse = (body: ArrayBuffer | Blob) =>
-  new Response(body, {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Cache-Control": "public, max-age=86400, s-maxage=604800",
-    },
-  });
+function resolveVoice(lang?: string): string {
+  if (!lang) return VOICE_MAP.en;
+  const normalized = lang.toLowerCase().trim();
+  const short = normalized.split("-")[0];
+  if (VOICE_MAP[short]) return VOICE_MAP[short];
 
-async function elevenLabs(text: string) {
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) return null;
-
-  const voiceId =
-    process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
-    {
-      method: "POST",
-      headers: {
-        "xi-api-key": key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.45,
-          similarity_boost: 0.8,
-          style: 0.1,
-          use_speaker_boost: true,
-        },
-      }),
-    },
-  );
-
-  if (!response.ok) {
-    console.warn(
-      "ElevenLabs voice failed:",
-      response.status,
-      await response.text().catch(() => ""),
-    );
-    return null;
-  }
-
-  return audioResponse(await response.arrayBuffer());
+  const byName: Record<string, string> = {
+    english: VOICE_MAP.en,
+    hindi: VOICE_MAP.hi,
+    bengali: VOICE_MAP.bn,
+    bangla: VOICE_MAP.bn,
+    tamil: VOICE_MAP.ta,
+    telugu: VOICE_MAP.te,
+    kannada: VOICE_MAP.kn,
+    marathi: VOICE_MAP.mr,
+    gujarati: VOICE_MAP.gu,
+    malayalam: VOICE_MAP.ml,
+    punjabi: VOICE_MAP.pa,
+    odia: VOICE_MAP.or,
+    oriya: VOICE_MAP.or,
+    assamese: VOICE_MAP.as,
+  };
+  return byName[normalized] || VOICE_MAP.en;
 }
 
-async function openAi(text: string) {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
-
-  const response = await fetch("https://api.openai.com/v1/audio/speech", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini-tts",
-      voice: "sage",
-      input: text,
-      response_format: "mp3",
-      speed: 0.95,
-      instructions:
-        "Speak slowly, warmly and clearly, like a patient teacher reading to an older adult.",
-    }),
-  });
-
-  if (!response.ok) {
-    console.warn(
-      "OpenAI voice failed:",
-      response.status,
-      await response.text().catch(() => ""),
-    );
-    return null;
-  }
-
-  return audioResponse(await response.arrayBuffer());
-}
-
-async function azure(text: string, lang: string) {
-  const key = process.env.AZURE_SPEECH_KEY;
-  const region = process.env.AZURE_SPEECH_REGION;
-  if (!key || !region) return null;
-
-  const voice = AZURE_VOICES[lang] ?? AZURE_VOICES.en;
-  const language = lang === "en" ? "en-IN" : `${lang}-IN`;
-  const escaped = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-  const ssml = `<speak version="1.0" xml:lang="${language}"><voice name="${voice}"><prosody rate="-8%">${escaped}</prosody></voice></speak>`;
-
-  const response = await fetch(
-    `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`,
-    {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": key,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "audio-24khz-96kbitrate-mono-mp3",
-      },
-      body: ssml,
-    },
-  );
-
-  if (!response.ok) {
-    console.warn(
-      "Azure voice failed:",
-      response.status,
-      await response.text().catch(() => ""),
-    );
-    return null;
-  }
-
-  return audioResponse(await response.arrayBuffer());
-}
-
-export async function POST(request: Request) {
-  let body: VoiceRequest;
+export async function POST(req: Request) {
   try {
-    body = (await request.json()) as VoiceRequest;
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
+    const body = await req.json();
+    const text = typeof body?.text === "string" ? body.text.trim() : "";
+    const language = typeof body?.language === "string" ? body.language : body?.lang;
 
-  const text = String(body.text ?? "").trim();
-  const lang = String(body.lang ?? "en");
-  if (!text) {
-    return NextResponse.json({ error: "No text to read." }, { status: 400 });
-  }
+    if (!text) {
+      return NextResponse.json({ error: "Text is required" }, { status: 400 });
+    }
 
-  const spoken = text.slice(0, 1200);
+    const voice = resolveVoice(language);
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-  try {
-    const audio =
-      (await elevenLabs(spoken)) ??
-      (await openAi(spoken)) ??
-      (await azure(spoken, lang));
+    const { audioStream } = tts.toStream(text, { rate: "-10%" });
+    const chunks: Buffer[] = [];
 
-    if (audio) return audio;
+    await new Promise<void>((resolve, reject) => {
+      audioStream.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
+      audioStream.on("end", () => resolve());
+      audioStream.on("error", (err: Error) => reject(err));
+    });
+
+    const audioBuffer = Buffer.concat(chunks);
+    return new Response(audioBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (error) {
-    console.warn("Voice request failed:", error);
+    console.error("TTS generation error:", error);
+    return NextResponse.json({ error: "Failed to synthesize speech" }, { status: 500 });
   }
-
-  // No provider is configured (or every provider failed). A 204 tells the
-  // browser to fall back to its own voice without showing a console error.
-  return new Response(null, { status: 204 });
 }

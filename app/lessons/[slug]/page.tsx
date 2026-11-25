@@ -7,7 +7,7 @@ import { useApp } from "@/components/app-provider";
 import { useT } from "@/components/i18n";
 import { Button, Card, LinkButton, cx } from "@/components/ui";
 import { StepExample } from "@/components/lesson-examples";
-import { getLesson } from "@/lib/lessons";
+import { freeLessons, getLesson } from "@/lib/lessons";
 import { localizeLesson } from "@/lib/i18n";
 
 const voiceLocales: Record<string, string> = {
@@ -135,6 +135,25 @@ export default function LessonPage() {
   }
 
   const isQuiz = Boolean(lesson.quiz?.length);
+  const completedFreeCount = freeLessons.filter((l) => Boolean(progress[l.slug])).length;
+  const totalFreeCount = freeLessons.length;
+
+  if (isQuiz && completedFreeCount < totalFreeCount) {
+    return (
+      <div className="mx-auto max-w-xl px-5 pt-16 text-center">
+        <h1 className="text-3xl text-cocoa-800">
+          Complete all {totalFreeCount} free lessons first
+        </h1>
+        <p className="mt-3 text-cocoa-700">
+          You have finished {completedFreeCount} of {totalFreeCount} free lessons. Finish the remaining lessons to unlock the Safety Quiz!
+        </p>
+        <LinkButton href="/lessons" className="mt-6">
+          {t("Back to lessons")}
+        </LinkButton>
+      </div>
+    );
+  }
+
   const lessonSlug = lesson.slug;
   const total = isQuiz ? lesson.quiz!.length : lesson.steps.length;
   const currentStep = isQuiz ? null : lesson.steps[step];
