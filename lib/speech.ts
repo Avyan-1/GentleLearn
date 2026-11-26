@@ -50,21 +50,15 @@ function audioElement(): HTMLAudioElement | null {
  * half-second of silence so the phone marks the player as "allowed".
  */
 export function unlockVoice() {
-  const player = audioElement();
-  if (!player || unlocked) return;
+  if (typeof window === "undefined" || unlocked) return;
   try {
-    player.src = SILENT_WAV;
-    const started = player.play();
+    const unlocker = new Audio(SILENT_WAV);
+    unlocker.setAttribute("playsinline", "true");
+    const started = unlocker.play();
     if (started) {
       started
-        .then(() => {
-          // Do not pause here: the real clip may already be starting. The
-          // silent clip is empty, so it ends by itself.
-          unlocked = true;
-        })
-        .catch(() => {
-          unlocked = false;
-        });
+        .then(() => { unlocked = true; })
+        .catch(() => { unlocked = false; });
     }
   } catch {
     unlocked = false;

@@ -129,6 +129,32 @@ async function edgeVoice(voice: string, text: string) {
   }
 }
 
+
+/** Free HTTPS MP3 fallback when datacenter IPs (Netlify/AWS) are blocked by Edge TTS. */
+async function googleFreeVoice(voice: string, text: string) {
+  const lang = voice.split("-")[0] || "en";
+  const tl = lang === "en" ? "en-IN" : lang;
+  const chunks = text.match(/.{1,180}(?:\s|$)/g) || [text];
+  const buffers: Buffer[] = [];
+
+  for (const part of chunks) {
+    const q = part.trim();
+    if (!q) continue;
+    const url = `https://googleapis.com${encodeURIComponent(tl)}&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "Referer": "https://google.com",
+      },
+    });
+    if (!res.ok) return null;
+    buffers.push(Buffer.from(await res.arrayBuffer()));
+  }
+
+  const combined = Buffer.concat(buffers);
+  return combined.length > 512 ? combined : null;
+}
+
 /** Optional paid providers, used only when a key is configured. */
 async function elevenLabs(text: string) {
   const key = process.env.ELEVENLABS_API_KEY;
@@ -218,6 +244,7 @@ async function synthesize(rawText: string, language: string) {
 
   const providers: Array<[string, () => Promise<Buffer | null>]> = [
     ["edge", () => edgeVoice(voice, text)],
+    ["google-free", () => googleFreeVoice(voice, text)],
     ["azure", () => azureVoice(text, AZURE_VOICES[voice] ?? voice)],
     ["elevenlabs", () => elevenLabs(text)],
     ["openai", () => openAi(text)],
