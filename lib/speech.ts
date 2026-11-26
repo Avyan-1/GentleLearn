@@ -37,6 +37,7 @@ function audioElement(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null;
   if (!element) {
     element = new Audio();
+    element.setAttribute("referrerpolicy", "no-referrer");
     element.preload = "auto";
     element.setAttribute("playsinline", "true");
     // iOS looks for the non-standard property as well as the attribute.

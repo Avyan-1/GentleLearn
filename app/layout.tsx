@@ -6,6 +6,7 @@ import { AppProvider } from "@/components/app-provider";
 import { TopBar } from "@/components/top-bar";
 
 export const metadata: Metadata = {
+  referrer: "no-referrer",
   title: "GentleLearn — Learn safely, at your own pace",
   description:
     "A calm, friendly place for seniors to learn digital skills — one big lesson at a time.",
