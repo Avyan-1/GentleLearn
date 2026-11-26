@@ -27,6 +27,8 @@ const keys = {
   session: "gentlelearn.sessionPhone",
   accounts: "gentlelearn.accounts",
   language: "gentlelearn.language",
+  stories: "gentlelearn.stories",
+  storyHelped: "gentlelearn.storyHelped",
   learners: (phone: string) => `gentlelearn.account.${phone}.learners`,
   progress: (phone: string, learnerId: string) =>
     `gentlelearn.account.${phone}.progress.${learnerId}`,
@@ -254,6 +256,86 @@ export function getLanguage(): string {
 
 export function setLanguage(language: string) {
   write(keys.language, language);
+}
+
+/* ---------------------------------------------------------------------------
+ * Community stories.
+ *
+ * Seeded with three real-sounding stories so the page is never empty, then
+ * grows with whatever the family shares. Kept on the device, and copied to
+ * Supabase when a backend is configured.
+ * ------------------------------------------------------------------------- */
+
+export type Story = {
+  id: string;
+  name: string;
+  text: string;
+  createdAt: string;
+  mine?: boolean;
+};
+
+const seedStories: Story[] = [
+  {
+    id: "seed-electricity",
+    name: "Rekha, 68 · Pune",
+    text: "A man called and said my electricity would be cut off in one hour unless I paid ₹500 on a link he sent. I put the phone down and called the electricity office myself. My bill was already paid. That one call saved me ₹500 and a very worried afternoon.",
+    createdAt: "2026-10-02T09:15:00.000Z",
+  },
+  {
+    id: "seed-prize",
+    name: "Mohan, 72 · Mysuru",
+    text: "I got a message saying I had won a fridge. It asked for ₹999 for delivery. My daughter told me that real prizes never ask for money first. I deleted the message and nothing bad happened.",
+    createdAt: "2026-10-18T14:40:00.000Z",
+  },
+  {
+    id: "seed-new-number",
+    name: "Lakshmi, 65 · Chennai",
+    text: "A message from a new number said it was my son and he needed money urgently. I called his old number instead. He was at home having tea. Now our family has a small secret question we ask whenever a number is new.",
+    createdAt: "2026-11-04T07:05:00.000Z",
+  },
+];
+
+export function getStories(): Story[] {
+  const shared = read<Story[]>(keys.stories, []);
+  const seen = new Set(shared.map((story) => story.id));
+  return [
+    ...shared,
+    ...seedStories.filter((story) => !seen.has(story.id)),
+  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export function addStory(name: string, text: string): Story | null {
+  const body = text.trim();
+  if (!body) return null;
+  const story: Story = {
+    id: crypto.randomUUID(),
+    name: name.trim() || "A friend of GentleLearn",
+    text: body,
+    createdAt: new Date().toISOString(),
+    mine: true,
+  };
+  write(keys.stories, [...read<Story[]>(keys.stories, []), story]);
+  return story;
+}
+
+export function cacheStories(stories: Story[]) {
+  const shared = read<Story[]>(keys.stories, []);
+  const mine = shared.filter((story) => story.mine);
+  const mineIds = new Set(mine.map((story) => story.id));
+  write(keys.stories, [
+    ...mine,
+    ...stories.filter((story) => !mineIds.has(story.id)),
+  ]);
+}
+
+export function hasHelped(storyId: string): boolean {
+  return read<string[]>(keys.storyHelped, []).includes(storyId);
+}
+
+export function markHelped(storyId: string) {
+  const helped = read<string[]>(keys.storyHelped, []);
+  if (helped.includes(storyId)) return;
+  write(keys.storyHelped, [...helped, storyId]);
 }
 
 export const languages = [

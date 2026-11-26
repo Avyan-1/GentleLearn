@@ -9,6 +9,7 @@ import { Logo, cx } from "@/components/ui";
 const items = [
   { href: "/lessons", label: "Lessons", short: "Lessons" },
   { href: "/ask", label: "Ask", short: "Ask" },
+  { href: "/community", label: "Community", short: "Community" },
   { href: "/plans", label: "Plans", short: "Plans" },
   { href: "/family", label: "Family corner", short: "Family" },
   { href: "/help", label: "Help", short: "Help" },

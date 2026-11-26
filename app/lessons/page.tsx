@@ -5,11 +5,31 @@ import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useApp } from "@/components/app-provider";
 import { useT } from "@/components/i18n";
+import { GameSummary } from "@/components/game-summary";
 import { cx } from "@/components/ui";
 import { localizeLesson } from "@/lib/i18n";
-import { categories, freeLessons, lessons, plusLessons, quizLesson } from "@/lib/lessons";
+import {
+  categories,
+  freeLessons,
+  lessons,
+  learningPath,
+  nextLesson,
+  pathLessons,
+  plusLessons,
+  quizLesson,
+} from "@/lib/lessons";
 
-function StatusPill({ done, plus }: { done: boolean; plus?: boolean }) {
+function StatusPill({
+  done,
+  next,
+  plus,
+  locked,
+}: {
+  done: boolean;
+  next?: boolean;
+  plus?: boolean;
+  locked?: boolean;
+}) {
   const t = useT();
 
   return (
@@ -18,12 +38,24 @@ function StatusPill({ done, plus }: { done: boolean; plus?: boolean }) {
         "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
         done
           ? "bg-forest-600 text-white"
-          : plus
-            ? "bg-sand-200 text-cocoa-700"
-            : "bg-sand-100 text-cocoa-700",
+          : next
+            ? "bg-amber-400 text-cocoa-800"
+            : locked
+              ? "bg-cocoa-200 text-cocoa-700"
+              : plus
+                ? "bg-sand-200 text-cocoa-700"
+                : "bg-sand-100 text-cocoa-700",
       )}
     >
-      {done ? t("Done") : plus ? t("Plus") : t("Start")}
+      {done
+        ? t("Done")
+        : next
+          ? t("Next up")
+          : locked
+            ? t("Locked")
+            : plus
+              ? t("Plus")
+              : t("Start")}
     </span>
   );
 }
@@ -76,7 +108,7 @@ function Group({
 
 export default function LessonsPage() {
   const router = useRouter();
-  const { ready, phone, activeLearner, progress, language } = useApp();
+  const { ready, phone, activeLearner, progress, language, game } = useApp();
   const t = useT();
 
   useEffect(() => {
@@ -93,6 +125,8 @@ export default function LessonsPage() {
 
   const freeDone = freeLessons.filter((lesson) => progress[lesson.slug]).length;
   const percent = Math.round((freeDone / freeLessons.length) * 100);
+  const nextUp = nextLesson(progress);
+  const quizUnlocked = freeDone >= freeLessons.length;
 
   return (
     <div className="mx-auto max-w-4xl px-5 pt-6 pb-16">
@@ -150,125 +184,147 @@ export default function LessonsPage() {
         </div>
       </div>
 
-      <div className="mt-8 space-y-3">
-        <Group
-          title={t("Start here")}
-          subtitle={t("The 10 regular lessons — free forever")}
-          done={freeDone}
-          total={freeLessons.length}
-          open
-        >
-          <ul className="space-y-2">
-            {freeLessons.map((lesson) => {
-              const done = Boolean(progress[lesson.slug]);
-              const text = localizeLesson(lesson, language);
+      <GameSummary game={game} className="mt-4" />
 
-              return (
-                <li key={lesson.slug}>
-                  <Link
-                    href={`/lessons/${lesson.slug}`}
-                    className={cx(
-                      "flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition-colors",
-                      done
-                        ? "bg-forest-500/10 hover:bg-forest-500/15"
-                        : "bg-sand-100 hover:bg-sand-200",
-                    )}
-                  >
-                    <span className="min-w-0">
-                      <span className="display block truncate text-lg font-bold text-cocoa-800">
-                        {text.title}
-                      </span>
-                      <span className="block text-sm font-semibold text-cocoa-600">
-                        {t("about {n} minutes", { n: lesson.minutes })}
-                        {lesson.quiz ? t(" · quiz") : ""}
-                      </span>
-                    </span>
-                    <StatusPill done={done} />
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </Group>
+      <div className="mt-8 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-2xl text-cocoa-800 sm:text-3xl">
+          {t("Your learning path")}
+        </h2>
+        <p className="text-sm font-semibold text-cocoa-600">
+          {t("A gentle path, one stage at a time.")}
+        </p>
+      </div>
 
-        {quizLesson ? (() => {
-          const completedFreeCount = freeLessons.filter((l) => Boolean(progress[l.slug])).length;
-          const totalFreeCount = freeLessons.length;
-          const quizUnlocked = completedFreeCount >= totalFreeCount;
-
-          if (!quizUnlocked) {
-            return (
-              <div
-                aria-disabled="true"
-                className="flex items-center gap-4 rounded-3xl border-2 border-cocoa-200 bg-cocoa-100/70 px-5 py-4 opacity-85"
-              >
-                <span
-                  aria-hidden="true"
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cocoa-200 text-2xl text-cocoa-700"
-                >
-                  🔒
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="display block text-xl font-bold text-cocoa-700">
-                    {t("Test yourself — {title}", {
-                      title: localizeLesson(quizLesson, language).title,
-                    })}
-                  </span>
-                  <span className="block text-sm font-semibold text-cocoa-600">
-                    Complete all {totalFreeCount} free lessons to unlock ({completedFreeCount}/{totalFreeCount} done)
-                  </span>
-                </span>
-                <span className="shrink-0 rounded-full bg-white px-3 py-1 text-sm font-bold text-cocoa-600">
-                  Locked
-                </span>
-              </div>
-            );
-          }
+      <ol className="mt-4 space-y-4">
+        {learningPath.map((stage, stageIndex) => {
+          const stageLessons = pathLessons(stage);
+          const doneCount = stageLessons.filter(
+            (lesson) => progress[lesson.slug],
+          ).length;
+          const stageDone =
+            stageLessons.length > 0 && doneCount === stageLessons.length;
+          const isCurrent =
+            !stageDone &&
+            stageLessons.some((lesson) => lesson.slug === nextUp?.slug);
+          const isQuizStage = stageIndex === learningPath.length - 1;
+          const locked = isQuizStage && !quizUnlocked;
 
           return (
-            <Link
-              href={`/lessons/${quizLesson.slug}`}
-              className="flex items-center gap-4 rounded-3xl border-2 border-amber-400 bg-amber-300/25 px-5 py-4 transition-colors hover:bg-amber-300/40"
+            <li
+              key={stage.title}
+              className={cx(
+                "rounded-3xl border-2 bg-white px-5 py-5",
+                isCurrent ? "border-amber-400" : "border-sand-200",
+              )}
             >
-              <span
-                aria-hidden="true"
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-2xl text-cocoa-800"
-              >
-                ✓
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="display block text-xl font-bold text-cocoa-800">
-                  {t("Test yourself — {title}", {
-                    title: localizeLesson(quizLesson, language).title,
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl",
+                    stageDone
+                      ? "bg-forest-600 text-white"
+                      : isCurrent
+                        ? "bg-amber-300"
+                        : "bg-sand-100",
+                  )}
+                >
+                  {stageDone ? "✓" : stage.emoji}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-extrabold tracking-[0.12em] text-cocoa-600 uppercase">
+                    {t("Stage {n} of {total}", {
+                      n: stageIndex + 1,
+                      total: learningPath.length,
+                    })}
+                  </p>
+                  <h3 className="display text-xl font-bold text-cocoa-800 sm:text-2xl">
+                    {t(stage.title)}
+                  </h3>
+                </div>
+
+                <span className="shrink-0 rounded-full bg-sand-100 px-3 py-1 text-sm font-bold text-cocoa-700">
+                  {stageDone
+                    ? t("Stage finished")
+                    : t("{done} of {total} done", {
+                        done: doneCount,
+                        total: stageLessons.length,
+                      })}
+                </span>
+              </div>
+
+              {locked ? (
+                <p className="mt-4 rounded-2xl bg-sand-100 px-4 py-3 text-cocoa-700">
+                  {t(
+                    "Complete all {n} free lessons to unlock the Safety Quiz.",
+                    { n: freeLessons.length },
+                  )}
+                </p>
+              ) : (
+                <ul className="mt-4 space-y-2">
+                  {stageLessons.map((lesson) => {
+                    const done = Boolean(progress[lesson.slug]);
+                    const isNext = nextUp?.slug === lesson.slug;
+                    const text = localizeLesson(lesson, language);
+
+                    return (
+                      <li key={lesson.slug}>
+                        <Link
+                          href={`/lessons/${lesson.slug}`}
+                          className={cx(
+                            "flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition-colors",
+                            done
+                              ? "bg-forest-500/10 hover:bg-forest-500/15"
+                              : isNext
+                                ? "bg-amber-100 hover:bg-amber-200/70"
+                                : "bg-sand-100 hover:bg-sand-200",
+                          )}
+                        >
+                          <span className="min-w-0">
+                            <span className="display block truncate text-lg font-bold text-cocoa-800">
+                              {text.title}
+                            </span>
+                            <span className="block text-sm font-semibold text-cocoa-600">
+                              {t("about {n} minutes", { n: lesson.minutes })}
+                              {lesson.quiz ? t(" · quiz") : ""}
+                            </span>
+                          </span>
+                          <StatusPill
+                            done={done}
+                            next={isNext && !done}
+                            locked={false}
+                          />
+                        </Link>
+                      </li>
+                    );
                   })}
-                </span>
-                <span className="block text-sm font-semibold text-cocoa-700">
-                  {localizeLesson(quizLesson, language).summary}
-                </span>
-              </span>
-              <span
-                className={cx(
-                  "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
-                  progress[quizLesson.slug]
-                    ? "bg-forest-600 text-white"
-                    : "bg-white text-cocoa-700",
-                )}
-              >
-                {progress[quizLesson.slug] ? t("Done") : t("Quiz")}
-              </span>
-            </Link>
+                </ul>
+              )}
+            </li>
           );
-        })() : null}
+        })}
+      </ol>
 
-        <div className="flex items-baseline justify-between gap-3 px-2 pt-4">
-          <h2 className="text-xl text-cocoa-800 sm:text-2xl">
-            {t("More lessons with Plus")}
-          </h2>
-          <span className="text-sm font-bold text-cocoa-600">
-            {t("{n} extra", { n: plusLessons.length })}
-          </span>
-        </div>
+      {quizLesson && !quizUnlocked ? (
+        <p className="mt-3 text-sm font-semibold text-cocoa-600">
+          {t("{done} of {total} free lessons finished so far.", {
+            done: freeDone,
+            total: freeLessons.length,
+          })}
+        </p>
+      ) : null}
 
+      <div className="mt-10 flex items-baseline justify-between gap-3 px-2">
+        <h2 className="text-xl text-cocoa-800 sm:text-2xl">
+          {t("More lessons with Plus")}
+        </h2>
+        <span className="text-sm font-bold text-cocoa-600">
+          {t("{n} extra", { n: plusLessons.length })}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-3">
         {categories.map((category) => {
           const items = lessons.filter(
             (lesson) => lesson.plus && lesson.category === category,

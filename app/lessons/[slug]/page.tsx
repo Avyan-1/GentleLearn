@@ -2,49 +2,20 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { useT } from "@/components/i18n";
 import { Button, Card, LinkButton, cx } from "@/components/ui";
 import { StepExample } from "@/components/lesson-examples";
-import { freeLessons, getLesson } from "@/lib/lessons";
+import {
+  exampleForLesson,
+  freeLessons,
+  getLesson,
+  nextLesson as findNextLesson,
+} from "@/lib/lessons";
 import { localizeLesson } from "@/lib/i18n";
-
-const voiceLocales: Record<string, string> = {
-  hi: "hi-IN",
-  bn: "bn-IN",
-  ta: "ta-IN",
-  te: "te-IN",
-  mr: "mr-IN",
-  as: "as-IN",
-  kn: "kn-IN",
-  gu: "gu-IN",
-  pa: "pa-IN",
-  ml: "ml-IN",
-  or: "or-IN",
-  en: "en-IN",
-};
-
-/** Pick the warmest voice the device already has installed. */
-function pickBrowserVoice(language: string) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return null;
-  const locale = (voiceLocales[language] ?? "en-IN").toLowerCase();
-  const short = locale.split("-")[0];
-  const voices = window.speechSynthesis.getVoices();
-  const matches = voices.filter((voice) => {
-    const lang = voice.lang.toLowerCase().replace("_", "-");
-    return lang === locale || lang.startsWith(`${short}-`);
-  });
-  return (
-    matches.find((voice) =>
-      /natural|neural|premium|enhanced|google|samantha|sonia|karen|moira|rishi|veena/i.test(
-        voice.name,
-      ),
-    ) ??
-    matches[0] ??
-    null
-  );
-}
+import { badgeById, type Award } from "@/lib/game";
+import { speak, stopVoice, unlockVoice } from "@/lib/speech";
 
 export default function LessonPage() {
   const params = useParams<{ slug: string }>();
@@ -58,10 +29,11 @@ export default function LessonPage() {
     language,
   } = useApp();
 
-  const lesson = useMemo(() => {
-    const found = getLesson(params.slug);
-    return found ? localizeLesson(found, language) : undefined;
-  }, [params.slug, language]);
+  const rawLesson = useMemo(() => getLesson(params.slug), [params.slug]);
+  const lesson = useMemo(
+    () => (rawLesson ? localizeLesson(rawLesson, language) : undefined),
+    [rawLesson, language],
+  );
   const t = useT();
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -69,42 +41,29 @@ export default function LessonPage() {
   const [picked, setPicked] = useState<number | null>(null);
   const [correct, setCorrect] = useState(0);
   const [speaking, setSpeaking] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const speechId = useRef(0);
+  const [award, setAward] = useState<Award | null>(null);
 
   useEffect(() => {
     if (ready && !phone) router.replace("/login");
   }, [ready, phone, router]);
 
-  function stopSpeaking() {
-    speechId.current += 1;
-    const player = audioRef.current;
-    if (player) {
-      player.pause();
-      audioRef.current = null;
-    }
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
-  }
-
   useEffect(() => {
-    stopSpeaking();
+    stopVoice();
     setSpeaking(false);
     // Stop any voice when the learner moves to another step or question.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, question, finished]);
 
   useEffect(() => {
     return () => {
-      stopSpeaking();
+      stopVoice();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!ready || !phone) {
     return <div className="min-h-[60vh]" aria-busy="true" />;
   }
 
-  if (!lesson) {
+  if (!lesson || !rawLesson) {
     return (
       <div className="mx-auto max-w-xl px-5 pt-16 text-center">
         <h1 className="text-3xl text-cocoa-800">
@@ -142,10 +101,13 @@ export default function LessonPage() {
     return (
       <div className="mx-auto max-w-xl px-5 pt-16 text-center">
         <h1 className="text-3xl text-cocoa-800">
-          Complete all {totalFreeCount} free lessons first
+          {t("Complete all {n} free lessons first", { n: totalFreeCount })}
         </h1>
         <p className="mt-3 text-cocoa-700">
-          You have finished {completedFreeCount} of {totalFreeCount} free lessons. Finish the remaining lessons to unlock the Safety Quiz!
+          {t(
+            "You have finished {done} of {total} free lessons. Finish the remaining lessons to unlock the Safety Quiz!",
+            { done: completedFreeCount, total: totalFreeCount },
+          )}
         </p>
         <LinkButton href="/lessons" className="mt-6">
           {t("Back to lessons")}
@@ -155,88 +117,56 @@ export default function LessonPage() {
   }
 
   const lessonSlug = lesson.slug;
-  const total = isQuiz ? lesson.quiz!.length : lesson.steps.length;
+  const stepCount = lesson.steps.length;
+  const exampleKey = isQuiz ? null : exampleForLesson(rawLesson);
+  const hasExampleStage = Boolean(exampleKey) && stepCount > 0;
+  const stageCount = stepCount + (hasExampleStage ? 1 : 0);
+
+  const total = isQuiz ? lesson.quiz!.length : stepCount;
   const currentStep = isQuiz ? null : lesson.steps[step];
   const currentQuestion = isQuiz ? lesson.quiz![question] : null;
-  const percent = finished ? 100 : Math.round(((isQuiz ? question : step) / total) * 100);
+  const onExampleStage =
+    !isQuiz && hasExampleStage && step >= stepCount;
 
-  async function speak(text: string) {
+  const percent = finished
+    ? 100
+    : Math.round(
+        ((isQuiz ? question : Math.min(step, stageCount)) /
+          Math.max(1, isQuiz ? total : stageCount)) *
+          100,
+      );
+
+  async function readAloud(text: string) {
     if (speaking) {
-      stopSpeaking();
+      stopVoice();
       setSpeaking(false);
       return;
     }
-
-    stopSpeaking();
-    const requestId = speechId.current;
+    // Must happen inside the tap so phones allow the audio to start later.
+    unlockVoice();
     setSpeaking(true);
-
-    // Prefer the configured human voice on the server.
-    try {
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, lang: language }),
-      });
-
-      if (requestId !== speechId.current) return;
-
-      if (
-        response.ok &&
-        response.headers.get("content-type")?.startsWith("audio")
-      ) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const player = new Audio(url);
-        audioRef.current = player;
-        player.onended = () => {
-          setSpeaking(false);
-          URL.revokeObjectURL(url);
-          audioRef.current = null;
-        };
-        player.onerror = () => {
-          setSpeaking(false);
-          URL.revokeObjectURL(url);
-          audioRef.current = null;
-        };
-        await player.play();
-        return;
-      }
-    } catch {
-      // Fall through to the browser voice.
-    }
-
-    if (requestId !== speechId.current) return;
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      setSpeaking(false);
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = voiceLocales[language] ?? "en-IN";
-    const voice = pickBrowserVoice(language);
-    if (voice) utterance.voice = voice;
-    utterance.rate = 0.92;
-    utterance.pitch = 1;
-    const safety = window.setTimeout(
-      () => setSpeaking(false),
-      Math.max(8000, text.length * 110),
-    );
-    utterance.onend = () => {
-      window.clearTimeout(safety);
-      setSpeaking(false);
-    };
-    utterance.onerror = () => {
-      window.clearTimeout(safety);
-      setSpeaking(false);
-    };
-    window.speechSynthesis.speak(utterance);
+    await speak(text, language, () => setSpeaking(false));
   }
 
   function finish() {
     setFinished(true);
-    completeLesson(lessonSlug);
+    const result = completeLesson(
+      lessonSlug,
+      isQuiz ? { correct, total } : undefined,
+    );
+    setAward(result);
   }
+
+  function restart() {
+    setFinished(false);
+    setStep(0);
+    setQuestion(0);
+    setPicked(null);
+    setCorrect(0);
+    setAward(null);
+  }
+
+  const next = findNextLesson(progress);
 
   return (
     <div className="mx-auto max-w-3xl px-5 pt-6 pb-16">
@@ -264,7 +194,10 @@ export default function LessonPage() {
         <div className="px-5 py-6 sm:px-7">
           {finished ? (
             <div className="text-center">
-              <p className="display text-2xl text-forest-700">
+              <p className="text-5xl" aria-hidden="true">
+                🎉
+              </p>
+              <p className="display mt-2 text-2xl text-forest-700">
                 {t("Well done!")}
               </p>
               <p className="mt-2 text-lg text-cocoa-700">
@@ -279,18 +212,46 @@ export default function LessonPage() {
                     })}`
                   : ""}
               </p>
+
+              {award ? (
+                <>
+                  <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-2 text-lg font-extrabold text-cocoa-800">
+                    <span aria-hidden="true">⭐</span>
+                    {t("You earned {n} stars!", { n: award.starsGained })}
+                  </p>
+
+                  {award.newBadges.length > 0 ? (
+                    <ul className="mt-3 flex flex-wrap justify-center gap-2">
+                      {award.newBadges.map((badge) => (
+                        <li
+                          key={badge.id}
+                          className="rounded-full border-2 border-forest-500 bg-forest-500/10 px-4 py-2 font-bold text-forest-700"
+                        >
+                          <span aria-hidden="true">{badge.emoji}</span>{" "}
+                          {t("New badge: {name}", { name: t(badge.label) })}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  <p className="mt-3 text-sm font-semibold text-cocoa-600">
+                    {t("Stars so far: {n}", { n: award.game.stars })} ·{" "}
+                    {t("{n}-day streak", { n: award.game.streak })}
+                  </p>
+                </>
+              ) : null}
+
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <LinkButton href="/lessons">{t("Back to lessons")}</LinkButton>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFinished(false);
-                    setStep(0);
-                    setQuestion(0);
-                    setPicked(null);
-                    setCorrect(0);
-                  }}
-                >
+                {next && next.slug !== lessonSlug ? (
+                  <LinkButton href={`/lessons/${next.slug}`} size="lg">
+                    {t("Start the next lesson")}
+                  </LinkButton>
+                ) : (
+                  <LinkButton href="/lessons" size="lg">
+                    {t("Back to lessons")}
+                  </LinkButton>
+                )}
+                <Button variant="outline" onClick={restart}>
                   {t("Do it again")}
                 </Button>
               </div>
@@ -394,16 +355,50 @@ export default function LessonPage() {
                 </Button>
               </div>
             </div>
+          ) : onExampleStage && exampleKey ? (
+            <div>
+              <div className="flex items-center justify-between text-sm font-bold text-cocoa-600">
+                <span>{t("A real example")}</span>
+                <span>
+                  {t("Step {a} of {b}", { a: stageCount, b: stageCount })}
+                </span>
+              </div>
+              <div className="mt-2 h-2.5 rounded-full bg-sand-200">
+                <div
+                  className="h-full rounded-full bg-forest-500 transition-all"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+
+              <h2 className="mt-6 text-2xl text-cocoa-800 sm:text-3xl">
+                {t("A real example")}
+              </h2>
+              <p className="mt-2 text-lg text-cocoa-700">
+                {t("This is what it looks like on your phone.")}
+              </p>
+
+              <StepExample kind={exampleKey} />
+
+              <div className="mt-7 flex items-center justify-between gap-3">
+                <Button variant="outline" onClick={() => setStep(stepCount - 1)}>
+                  {t("Back")}
+                </Button>
+                <Button onClick={finish}>{t("Finish lesson")}</Button>
+              </div>
+            </div>
           ) : currentStep ? (
             <div>
               <div className="flex items-center justify-between text-sm font-bold text-cocoa-600">
                 <span>
-                  {t("Step {a} of {b}", { a: step + 1, b: total })}
+                  {t("Step {a} of {b}", {
+                    a: step + 1,
+                    b: isQuiz ? total : stageCount,
+                  })}
                 </span>
                 <button
                   type="button"
                   onClick={() =>
-                    speak(`${currentStep.title}. ${currentStep.body}`)
+                    readAloud(`${currentStep.title}. ${currentStep.body}`)
                   }
                   className="inline-flex items-center gap-2 rounded-full border-2 border-sand-200 px-3 py-1 text-cocoa-700 hover:bg-sand-100"
                 >
@@ -440,16 +435,20 @@ export default function LessonPage() {
                 </Button>
                 <Button
                   onClick={() => {
-                    if (step + 1 >= total) {
-                      finish();
+                    if (step + 1 < stepCount) {
+                      setStep(step + 1);
+                    } else if (hasExampleStage) {
+                      setStep(stepCount);
                     } else {
-                      setStep((value) => value + 1);
+                      finish();
                     }
                   }}
                 >
-                  {step + 1 >= total
-                    ? t("Finish lesson")
-                    : t("Next step")}
+                  {step + 1 < stepCount
+                    ? t("Next step")
+                    : hasExampleStage
+                      ? t("See an example")
+                      : t("Finish lesson")}
                 </Button>
               </div>
             </div>

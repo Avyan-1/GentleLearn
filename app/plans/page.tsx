@@ -12,7 +12,7 @@ const plans = [
     price: "₹0",
     cadence: "always free",
     features: [
-      "All 10 regular lessons",
+      "All 20 regular lessons",
       "Read this aloud in every lesson",
       "3 questions a day per learner",
     ],

@@ -50,7 +50,7 @@ const plans = [
     name: "Free",
     price: "₹0",
     cadence: "always free",
-    feature: "All 10 regular lessons",
+    feature: "All 20 regular lessons",
     accent: "border-forest-600",
   },
   {

@@ -437,6 +437,330 @@ function FamilyInTrouble() {
   );
 }
 
+function VoiceTyping() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="typing with your voice"
+      notes={[
+        "Tap the small microphone on the keyboard, not the green WhatsApp button.",
+        "Wait for the chime, then speak your message at your normal speed.",
+        "Read the words on screen before you tap Send.",
+      ]}
+    >
+      <div className="rounded-xl border-2 border-sand-200 bg-white p-3">
+        <p className="text-xs font-bold text-cocoa-600">{t("Your message")}</p>
+        <p className="mt-1 rounded-lg bg-sand-50 px-3 py-2 text-cocoa-800">
+          {t("Hello beta, I reached home safely.")}
+        </p>
+        <div className="mt-2 flex items-center justify-center gap-4 rounded-lg bg-sand-100 py-2 text-xl">
+          <span aria-hidden="true">⌨️</span>
+          <span
+            aria-hidden="true"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-600 text-white"
+          >
+            🎤
+          </span>
+          <span aria-hidden="true">➤</span>
+        </div>
+        <p className="mt-2 text-center text-xs font-bold text-cocoa-600">
+          {t("Tap the microphone and speak")}
+        </p>
+      </div>
+    </Frame>
+  );
+}
+
+function QuietNight() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="a quiet night"
+      notes={[
+        "Open Settings, then Sound or Modes, and turn on Do Not Disturb.",
+        "Allow calls from Favourites so your family can still reach you.",
+        "Set it from 10 PM to 7 AM — spam stays quiet till morning.",
+      ]}
+    >
+      <div className="rounded-xl border-2 border-sand-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-bold text-cocoa-800">{t("Do Not Disturb")}</p>
+          <span className="rounded-full bg-forest-600 px-3 py-1 text-xs font-bold text-white">
+            {t("On")}
+          </span>
+        </div>
+        <dl className="mt-3 space-y-2 text-sm text-cocoa-700">
+          <div className="flex justify-between gap-3">
+            <dt>{t("Allowed calls")}</dt>
+            <dd className="font-bold text-cocoa-800">{t("Favourites")}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>{t("Quiet hours")}</dt>
+            <dd className="font-bold text-cocoa-800">10:00 PM – 7:00 AM</dd>
+          </div>
+        </dl>
+      </div>
+    </Frame>
+  );
+}
+
+function LiveLocation() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="sharing where you are"
+      notes={[
+        "Open the family chat on WhatsApp.",
+        "Tap the paperclip or plus, then choose Location.",
+        "Choose Share live location for 1 hour, then tap Send.",
+      ]}
+    >
+      <div className="max-w-[92%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-cocoa-800">
+        <p className="text-sm font-bold text-cocoa-600">{t("Family chat")}</p>
+        <div className="mt-2 overflow-hidden rounded-xl border-2 border-sand-200">
+          <div className="flex h-24 items-center justify-center bg-forest-500/20 text-4xl">
+            <span aria-hidden="true">📍</span>
+          </div>
+          <div className="bg-white px-3 py-2">
+            <p className="text-sm font-bold">{t("Live location · 1 hour")}</p>
+            <p className="text-xs font-semibold text-cocoa-600">
+              {t("Share live location")}
+            </p>
+          </div>
+        </div>
+        <p className="mt-2 inline-block rounded-full bg-sand-100 px-3 py-1 text-xs font-bold text-cocoa-700">
+          {t("Stop sharing")}
+        </p>
+      </div>
+    </Frame>
+  );
+}
+
+function AiChat() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="asking AI a question"
+      notes={[
+        "Type or speak your question in your own words.",
+        "Read the answer slowly. AI can be wrong.",
+        "Always check with your doctor or the office before acting.",
+      ]}
+    >
+      <div className="space-y-2">
+        <div className="ml-auto max-w-[88%] rounded-2xl rounded-tr-sm bg-forest-600 px-4 py-3 text-white">
+          <p className="text-xs opacity-90">{t("You asked")}</p>
+          <p className="mt-1">
+            {t("What are the side effects of amlodipine?")}
+          </p>
+        </div>
+        <div className="max-w-[92%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-cocoa-800">
+          <p className="text-xs font-bold text-cocoa-600">{t("AI helper")}</p>
+          <p className="mt-1 text-sm">
+            {t(
+              "Common side effects include ankle swelling and feeling tired. Please check with your doctor.",
+            )}
+          </p>
+        </div>
+      </div>
+      <p className="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-sm font-bold text-cocoa-800">
+        {t("Check with your doctor before changing any medicine.")}
+      </p>
+    </Frame>
+  );
+}
+
+function AiVoiceCall() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="a voice that sounds like family"
+      notes={[
+        "A copied voice can sound exactly like your son or daughter.",
+        "Hang up and call their saved number yourself.",
+        "Agree on a family code word that only you know.",
+      ]}
+    >
+      <div className="mx-auto max-w-[250px] rounded-[2rem] bg-cocoa-800 p-4 text-center text-white">
+        <p className="text-[10px] font-extrabold tracking-[0.2em] text-sand-200 uppercase">
+          {t("Incoming call")}
+        </p>
+        <div className="mx-auto mt-3 flex h-16 w-16 items-center justify-center rounded-full bg-sand-200 text-xl font-bold text-cocoa-800">
+          R
+        </div>
+        <p className="display mt-2 text-xl">{t("Son")}</p>
+        <p className="text-sm text-sand-200">+91 90000 22222</p>
+        <p className="mt-3 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-cocoa-800">
+          {t("Voice can be copied")}
+        </p>
+        <p className="mt-3 text-sm font-bold text-sand-100">
+          {t("Hang up and call back")}
+        </p>
+        <div className="mt-3 flex justify-center gap-5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-sm">
+            ✕
+          </span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-600 text-sm">
+            📞
+          </span>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function StorageCleanup() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="clearing old forwards"
+      notes={[
+        "Open WhatsApp, then Settings, then Storage and data.",
+        "Tap Manage storage and choose Larger than 5 MB.",
+        "Delete only forwarded videos. Your own photos stay safe.",
+      ]}
+    >
+      <div className="rounded-xl border-2 border-sand-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-bold text-cocoa-800">{t("Manage storage")}</p>
+          <span className="rounded-full bg-sand-100 px-3 py-1 text-xs font-bold text-cocoa-700">
+            {t("Larger than 5 MB")}
+          </span>
+        </div>
+        <ul className="mt-3 space-y-2 text-sm">
+          <li className="flex items-center justify-between gap-3 rounded-lg bg-sand-50 px-3 py-2">
+            <span>{t("Good morning video")}</span>
+            <span className="font-bold text-cocoa-600">18 MB</span>
+          </li>
+          <li className="flex items-center justify-between gap-3 rounded-lg bg-sand-50 px-3 py-2">
+            <span>{t("Forwarded video")}</span>
+            <span className="font-bold text-cocoa-600">32 MB</span>
+          </li>
+        </ul>
+        <p className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-center text-sm font-bold text-white">
+          {t("Delete selected")}
+        </p>
+      </div>
+    </Frame>
+  );
+}
+
+function RideBooking() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="booking a ride"
+      notes={[
+        "Check the pickup spot and the fare before you tap Book.",
+        "Match the last four digits of the number plate.",
+        "Share the 4-digit PIN only after you sit inside.",
+      ]}
+    >
+      <div className="rounded-xl border-2 border-sand-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-bold text-cocoa-800">{t("Auto")}</p>
+          <p className="font-bold text-cocoa-800">₹85</p>
+        </div>
+        <dl className="mt-3 space-y-2 text-sm text-cocoa-700">
+          <div className="flex justify-between gap-3">
+            <dt>{t("Pickup")}</dt>
+            <dd className="font-bold text-cocoa-800">{t("Main gate")}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>{t("Number plate ends with")}</dt>
+            <dd className="font-mono font-bold text-cocoa-800">4821</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt>{t("Ride PIN")}</dt>
+            <dd className="font-mono text-lg font-bold text-forest-700">7319</dd>
+          </div>
+        </dl>
+        <p className="mt-3 rounded-lg bg-forest-600 px-4 py-2 text-center font-bold text-white">
+          {t("Book")}
+        </p>
+      </div>
+    </Frame>
+  );
+}
+
+function UpiPin() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="checking before you pay"
+      notes={[
+        "Your UPI PIN only sends money. It never receives money.",
+        "Read the receiver's name and the amount at the top.",
+        "Never enter your PIN to get a refund or a prize.",
+      ]}
+    >
+      <div className="rounded-xl border-2 border-sand-200 bg-white p-4">
+        <p className="text-xs font-bold text-cocoa-600">{t("Paying")}</p>
+        <p className="display mt-1 text-2xl text-cocoa-800">{t("Sunita Sharma")}</p>
+        <p className="display text-3xl text-cocoa-800">₹1,250</p>
+        <div className="mt-3 rounded-lg bg-sand-100 px-3 py-2 text-center font-bold text-cocoa-700">
+          {t("Enter UPI PIN")}
+        </div>
+        <p className="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs font-bold text-cocoa-800">
+          {t("PIN sends money only — never to receive.")}
+        </p>
+      </div>
+    </Frame>
+  );
+}
+
+function EmergencyCard() {
+  const t = useT();
+
+  return (
+    <Frame
+      title="help from your lock screen"
+      notes={[
+        "Open Settings and search for Emergency information.",
+        "Add your blood group and two family phone numbers.",
+        "Anyone can see this from the lock screen without your password.",
+      ]}
+    >
+      <div className="mx-auto max-w-[260px] rounded-[2rem] border-[6px] border-cocoa-800 bg-white p-3">
+        <div className="flex items-center justify-between text-[11px] font-bold text-cocoa-600">
+          <span>9:41</span>
+          <span aria-hidden="true">▮▮▮</span>
+        </div>
+        <div className="mt-3 rounded-xl bg-sand-100 p-3">
+          <p className="text-sm font-extrabold text-cocoa-800">
+            {t("Emergency information")}
+          </p>
+          <dl className="mt-2 space-y-1 text-xs text-cocoa-700">
+            <div className="flex justify-between gap-2">
+              <dt>{t("Blood group")}</dt>
+              <dd className="font-bold text-cocoa-800">B+</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt>{t("Son")}</dt>
+              <dd className="font-bold text-cocoa-800">Ravi</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt>{t("Daughter")}</dt>
+              <dd className="font-bold text-cocoa-800">Meena</dd>
+            </div>
+          </dl>
+          <p className="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-center text-xs font-bold text-white">
+            {t("Call")}
+          </p>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
 export function StepExample({ kind }: { kind: ExampleKey }) {
   switch (kind) {
     case "fraud-email":
@@ -459,6 +783,24 @@ export function StepExample({ kind }: { kind: ExampleKey }) {
       return <StrangeLink />;
     case "family-in-trouble":
       return <FamilyInTrouble />;
+    case "voice-typing":
+      return <VoiceTyping />;
+    case "quiet-night":
+      return <QuietNight />;
+    case "live-location":
+      return <LiveLocation />;
+    case "ai-chat":
+      return <AiChat />;
+    case "ai-voice-call":
+      return <AiVoiceCall />;
+    case "storage-cleanup":
+      return <StorageCleanup />;
+    case "ride-booking":
+      return <RideBooking />;
+    case "upi-pin":
+      return <UpiPin />;
+    case "emergency-card":
+      return <EmergencyCard />;
     default:
       return null;
   }

@@ -11,6 +11,7 @@ import {
 import {
   addLearner as addLearnerToStore,
   addQuestion as addQuestionToStore,
+  addStory as addStoryToStore,
   createAccount,
   getActiveLearner,
   getLanguage,
@@ -18,6 +19,7 @@ import {
   getProgress,
   getQuestions,
   getSessionPhone,
+  getStories,
   markLessonDone,
   removeLearner as removeLearnerFromStore,
   renameLearner as renameLearnerInStore,
@@ -28,7 +30,10 @@ import {
   type Learner,
   type Progress,
   type Question,
+  type Story,
 } from "@/lib/store";
+import { awardLesson, getGame, type Award, type Game } from "@/lib/game";
+import { freeLessons } from "@/lib/lessons";
 import {
   pushLearner,
   pushLearnerName,
@@ -51,6 +56,8 @@ type AppState = {
   progress: Progress;
   questions: Question[];
   language: string;
+  game: Game;
+  stories: Story[];
 };
 
 type AppContextValue = AppState & {
@@ -61,8 +68,12 @@ type AppContextValue = AppState & {
   renameLearner: (id: string, name: string) => void;
   removeLearner: (id: string) => void;
   selectLearner: (id: string) => void;
-  completeLesson: (slug: string) => void;
+  completeLesson: (
+    slug: string,
+    quiz?: { correct: number; total: number },
+  ) => Award | null;
   askQuestion: (text: string) => void;
+  shareStory: (name: string, text: string) => Story | null;
   chooseLanguage: (code: string) => void;
 };
 
@@ -77,6 +88,8 @@ const emptyState: AppState = {
   progress: {},
   questions: [],
   language: "",
+  game: getGame("", ""),
+  stories: [],
 };
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -99,6 +112,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         phone && activeLearnerId ? getProgress(phone, activeLearnerId) : {},
       questions: phone ? getQuestions(phone) : [],
       language: getLanguage(),
+      game:
+        phone && activeLearnerId
+          ? getGame(phone, activeLearnerId)
+          : getGame("", ""),
+      stories: getStories(),
     });
   }, []);
 
@@ -188,8 +206,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setActiveLearner(state.phone, id);
         refresh();
       },
-      completeLesson: (slug) => {
-        if (!state.phone || !state.activeLearnerId) return;
+      completeLesson: (slug, quiz) => {
+        if (!state.phone || !state.activeLearnerId) return null;
+        const before = Boolean(
+          getProgress(state.phone, state.activeLearnerId)[slug],
+        );
         markLessonDone(state.phone, state.activeLearnerId, slug);
         if (isSupabaseConfigured) {
           const completedAt = getProgress(
@@ -200,7 +221,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             void pushLessonDone(state.activeLearnerId, slug, completedAt);
           }
         }
+        const lessonsDone = Object.keys(
+          getProgress(state.phone, state.activeLearnerId),
+        ).length;
+        const award = awardLesson({
+          phone: state.phone,
+          learnerId: state.activeLearnerId,
+          repeat: before,
+          lessonsDone,
+          totalLessons: freeLessons.length,
+          quiz,
+        });
         refresh();
+        return award;
       },
       askQuestion: (text) => {
         if (!state.phone || !state.activeLearner) return;
@@ -213,6 +246,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const added = questions[questions.length - 1];
         if (added && isSupabaseConfigured) void pushQuestion(added);
         refresh();
+      },
+      shareStory: (name, text) => {
+        const story = addStoryToStore(name, text);
+        refresh();
+        return story;
       },
       chooseLanguage: (code) => {
         setLanguageInStore(code);

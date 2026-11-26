@@ -8,7 +8,16 @@ export type ExampleKey =
   | "bill-payment"
   | "caller-id"
   | "strange-link"
-  | "family-in-trouble";
+  | "family-in-trouble"
+  | "voice-typing"
+  | "quiet-night"
+  | "live-location"
+  | "ai-chat"
+  | "ai-voice-call"
+  | "storage-cleanup"
+  | "ride-booking"
+  | "upi-pin"
+  | "emergency-card";
 
 export type Step = {
   title: string;
@@ -321,121 +330,121 @@ const free: Seed[] = [
     steps: [],
     quiz: [
       {
-        question: "1. In a video call with your grandchild, which button turns on the camera so you can see each other?",
+        question: "In a video call with your grandchild, which button turns on the camera so you can see each other?",
         options: ["The mute bell", "The small video camera icon", "The airplane button"],
         answer: 1,
         why: "Tapping the small video camera icon starts your video call.",
       },
       {
-        question: "2. An email says URGENT: Your account closes in 1 hour! Click here now. What is the safest thing to do?",
+        question: "An email says URGENT: Your account closes in 1 hour! Click here now. What is the safest thing to do?",
         options: ["Tap the link quickly", "Do not tap the link and check who sent it", "Reply with your password"],
         answer: 1,
         why: "Trick emails create false hurry to make you tap unsafe links.",
       },
       {
-        question: "3. Before confirming an electricity or phone bill payment in your bank app, what should you check?",
+        question: "Before confirming an electricity or phone bill payment in your bank app, what should you check?",
         options: ["Only the colour of the screen", "The biller name and exact rupee amount", "Nothing at all"],
         answer: 1,
         why: "Always check the receiver name and amount before tapping Confirm.",
       },
       {
-        question: "4. How can you tell a website address is safer to use?",
+        question: "How can you tell a website address is safer to use?",
         options: ["It has bright flashing colours", "It shows a padlock and the exact spelled name", "It opens from a forwarded message"],
         answer: 1,
         why: "Look for the padlock and read the website name letter by letter.",
       },
       {
-        question: "5. When your grandchild sends a photo on WhatsApp, how do you keep it on your phone?",
+        question: "When your grandchild sends a photo on WhatsApp, how do you keep it on your phone?",
         options: ["Take a picture of your screen", "Tap the photo and choose Save or Download", "Delete the chat"],
         answer: 1,
         why: "Opening the photo and tapping Save puts it safely in your Photos gallery.",
       },
       {
-        question: "6. Someone phones saying they are from your bank and asks for the 6-digit OTP code on your phone. What do you do?",
+        question: "Someone phones saying they are from your bank and asks for the 6-digit OTP code on your phone. What do you do?",
         options: ["Read the code to them", "Say no and hang up immediately", "Send it by SMS instead"],
         answer: 1,
         why: "Your OTP is only for you. No real bank or office will ever ask for it.",
       },
       {
-        question: "7. A message says you won a lottery prize, but you must pay a small fee first. What is this?",
+        question: "A message says you won a lottery prize, but you must pay a small fee first. What is this?",
         options: ["A real prize", "A fake prize trick", "A bank gift"],
         answer: 1,
         why: "A prize you never entered for is not real, and you never pay to receive a prize.",
       },
       {
-        question: "8. A caller claims to be a police or tax officer demanding immediate payment over the phone. What should you do?",
+        question: "A caller claims to be a police or tax officer demanding immediate payment over the phone. What should you do?",
         options: ["Pay right away so they do not get angry", "Hang up and call the real office number you trust", "Share your bank card number"],
         answer: 1,
         why: "Real government offices never demand urgent money over a phone call.",
       },
       {
-        question: "9. A link or app file arrives from an unknown number. What is the safest choice?",
+        question: "A link or app file arrives from an unknown number. What is the safest choice?",
         options: ["Tap it to see what it is", "Delete it without tapping and only use official app stores", "Forward it to your family group"],
         answer: 1,
         why: "Unknown links and files can harm your phone. Always delete them.",
       },
       {
-        question: "10. Your grandson messages from a new number asking for money urgently. What do you do first?",
+        question: "Your grandson messages from a new number asking for money urgently. What do you do first?",
         options: ["Send the money in a hurry", "Call his usual saved phone number to check", "Reply asking for his bank details"],
         answer: 1,
         why: "Always call the person on their regular saved number before sending money.",
       },
       {
-        question: "11. After asking an AI helper about a medicine or health symptom, what should you always do?",
+        question: "After asking an AI helper about a medicine or health symptom, what should you always do?",
         options: ["Change your tablets immediately", "Confirm with your doctor before changing any medicine", "Ignore your doctor"],
         answer: 1,
         why: "AI helps explain words simply, but only your doctor should guide your treatment.",
       },
       {
-        question: "12. Before pasting a bank letter or bill into an AI helper to explain it, what should you remove first?",
+        question: "Before pasting a bank letter or bill into an AI helper to explain it, what should you remove first?",
         options: ["The date of the letter", "Your full bank account number, Aadhaar, or passwords", "The greeting at the top"],
         answer: 1,
         why: "Always remove private account numbers and passwords before pasting text.",
       },
       {
-        question: "13. A call sounds just like your relative crying for money, or a video shows a celebrity promising guaranteed profits. What could this be?",
+        question: "A call sounds just like your relative crying for money, or a video shows a celebrity promising guaranteed profits. What could this be?",
         options: ["A guaranteed investment", "An AI-faked voice or scam video", "A bank announcement"],
         answer: 1,
         why: "Scammers use AI to copy voices and faces. Always hang up and call your relative directly.",
       },
       {
-        question: "14. If keyboard letters feel too small while typing a WhatsApp message, which icon lets you speak your message?",
+        question: "If keyboard letters feel too small while typing a WhatsApp message, which icon lets you speak your message?",
         options: ["The camera icon", "The small microphone icon on your keyboard", "The battery icon"],
         answer: 1,
         why: "Tapping the keyboard microphone turns your spoken words into written text.",
       },
       {
-        question: "15. How can you silence spam calls at night while still letting your children or spouse ring through?",
+        question: "How can you silence spam calls at night while still letting your children or spouse ring through?",
         options: ["Turn off your phone completely", "Turn on Do Not Disturb and allow Favourite contacts", "Put your phone in another room"],
         answer: 1,
         why: "Do Not Disturb silences late-night spam while allowing calls from your Favourites.",
       },
       {
-        question: "16. When taking an auto or cab alone, how can you let your family know you reached safely?",
+        question: "When taking an auto or cab alone, how can you let your family know you reached safely?",
         options: ["Send them a blank photo", "Share your Live Location on WhatsApp for 1 hour", "Turn off mobile data"],
         answer: 1,
         why: "Sharing your live location lets family follow your trip until you arrive safely.",
       },
       {
-        question: "17. Your phone says Storage Full. How can you free up space without deleting your personal family photos?",
+        question: "Your phone says Storage Full. How can you free up space without deleting your personal family photos?",
         options: ["Delete your entire photo gallery", "Open WhatsApp Manage Storage and delete large forwarded videos", "Buy a new phone"],
         answer: 1,
         why: "Clearing forwarded WhatsApp videos frees up space while keeping your Gallery safe.",
       },
       {
-        question: "18. Before stepping inside an auto or cab booked on your phone, what should you check first?",
+        question: "Before stepping inside an auto or cab booked on your phone, what should you check first?",
         options: ["The colour of the seats", "That the vehicle number plate matches your app", "The driver’s wallpaper"],
         answer: 1,
         why: "Always match the number plate first, then share your 4-digit PIN after sitting inside.",
       },
       {
-        question: "19. When do you enter your 4- or 6-digit UPI PIN?",
+        question: "When do you enter your 4- or 6-digit UPI PIN?",
         options: ["To receive a refund or prize", "ONLY when you are sending money out of your account", "Whenever a caller asks you to test it"],
         answer: 1,
         why: "You never enter a UPI PIN to receive money—only to send money.",
       },
       {
-        question: "20. Why is it helpful to save Emergency Contacts and your blood group on your lock screen?",
+        question: "Why is it helpful to save Emergency Contacts and your blood group on your lock screen?",
         options: ["It makes the battery last longer", "Helpers can call your family in one tap without needing your passcode", "It blocks spam messages"],
         answer: 1,
         why: "Emergency info on your lock screen lets doctors or helpers reach your family immediately.",
@@ -787,3 +796,135 @@ export const lessonsByCategory = () =>
     category,
     lessons: lessons.filter((lesson) => lesson.category === category),
   }));
+
+/* ---------------------------------------------------------------------------
+ * The learning path.
+ *
+ * The free lessons are re-ordered into four gentle stages. Each stage is small
+ * enough to finish in one sitting, and the last one is the safety quiz.
+ * ------------------------------------------------------------------------- */
+
+export type PathStage = {
+  /** English wording; screens translate it with t(). */
+  title: string;
+  emoji: string;
+  slugs: string[];
+};
+
+export const learningPath: PathStage[] = [
+  {
+    title: "The basics",
+    emoji: "🌱",
+    slugs: [
+      "use-voice-typing-instead-of-small-keys",
+      "turn-on-do-not-disturb-at-night",
+    ],
+  },
+  {
+    title: "Family and friends",
+    emoji: "👪",
+    slugs: [
+      "call-my-grandchild",
+      "open-the-photos-grandkids-send",
+      "send-your-live-location-when-outside",
+    ],
+  },
+  {
+    title: "Spot the tricks",
+    emoji: "🔍",
+    slugs: [
+      "spot-a-trick-email",
+      "tell-a-real-website",
+      "never-share-your-secret-code-otp",
+      "say-no-to-fake-prizes",
+    ],
+  },
+  {
+    title: "Calls, links and family",
+    emoji: "📞",
+    slugs: [
+      "dont-fall-for-fake-official-calls",
+      "stay-away-from-strange-links-and-apps",
+      "check-first-when-family-is-in-trouble",
+      "spot-fake-ai-voices-and-scam-videos",
+      "save-emergency-contacts-on-your-lock-screen",
+    ],
+  },
+  {
+    title: "Everyday help with AI",
+    emoji: "🤖",
+    slugs: [
+      "ask-ai-a-health-or-medicine-question-safely",
+      "ask-ai-to-explain-a-long-bank-letter-or-bill",
+    ],
+  },
+  {
+    title: "Money, safely",
+    emoji: "💰",
+    slugs: [
+      "pay-a-bill-from-home",
+      "check-any-upi-payment-before-entering-your-pin",
+    ],
+  },
+  {
+    title: "Out and about",
+    emoji: "🚕",
+    slugs: ["book-an-auto-or-cab-safely-on-your-phone"],
+  },
+  {
+    title: "Photos and phone space",
+    emoji: "🖼️",
+    slugs: ["free-up-phone-space-without-losing-photos"],
+  },
+  {
+    title: "Test yourself",
+    emoji: "🏅",
+    slugs: quizLesson ? [quizLesson.slug] : [],
+  },
+];
+
+export const pathLessons = (stage: PathStage) =>
+  stage.slugs
+    .map((slug) => lessons.find((lesson) => lesson.slug === slug))
+    .filter((lesson): lesson is Lesson => Boolean(lesson));
+
+/** The example screen shown at the end of a lesson. */
+export function exampleForLesson(lesson: Lesson): ExampleKey {
+  const bySlug: Record<string, ExampleKey> = {
+    "use-voice-typing-instead-of-small-keys": "voice-typing",
+    "turn-on-do-not-disturb-at-night": "quiet-night",
+    "send-your-live-location-when-outside": "live-location",
+    "ask-ai-a-health-or-medicine-question-safely": "ai-chat",
+    "ask-ai-to-explain-a-long-bank-letter-or-bill": "ai-chat",
+    "spot-fake-ai-voices-and-scam-videos": "ai-voice-call",
+    "free-up-phone-space-without-losing-photos": "storage-cleanup",
+    "book-an-auto-or-cab-safely-on-your-phone": "ride-booking",
+    "check-any-upi-payment-before-entering-your-pin": "upi-pin",
+    "save-emergency-contacts-on-your-lock-screen": "emergency-card",
+  };
+  const byLesson = bySlug[lesson.slug];
+  if (byLesson) return byLesson;
+
+  const inStep = lesson.steps.find((step) => step.example)?.example;
+  if (inStep) return inStep;
+
+  const byCategory: Record<Category, ExampleKey> = {
+    "Smartphone basics": "video-call",
+    "Messaging and communication": "video-call",
+    "Privacy and digital safety": "fraud-email",
+    "Everyday online services": "ai-chat",
+    "Money and digital payments": "bill-payment",
+    "Photos, files and entertainment": "photo-message",
+  };
+  return byCategory[lesson.category];
+}
+
+/** The next lesson in the path, so the learner always knows where to go. */
+export function nextLesson(progress: Record<string, string>): Lesson | null {
+  for (const stage of learningPath) {
+    for (const lesson of pathLessons(stage)) {
+      if (!progress[lesson.slug]) return lesson;
+    }
+  }
+  return null;
+}

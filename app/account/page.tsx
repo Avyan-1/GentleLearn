@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useApp } from "@/components/app-provider";
 import { useT } from "@/components/i18n";
+import { GameSummary } from "@/components/game-summary";
 import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
 import { formatPhone, languages } from "@/lib/store";
 
@@ -17,6 +18,7 @@ export default function AccountPage() {
     language,
     chooseLanguage,
     signOut,
+    game,
   } = useApp();
   const t = useT();
 
@@ -65,11 +67,16 @@ export default function AccountPage() {
           <LinkButton href="/family" variant="outline">
             {t("Family corner")}
           </LinkButton>
+          <LinkButton href="/community" variant="outline">
+            {t("Community stories")}
+          </LinkButton>
           <LinkButton href="/plans" variant="outline">
             {t("See plans")}
           </LinkButton>
         </div>
       </Card>
+
+      <GameSummary game={game} className="mt-6" />
 
       <Card className="mt-6">
         <h2 className="text-xl text-cocoa-800">{t("Language")}</h2>
