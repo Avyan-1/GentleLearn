@@ -184,11 +184,26 @@ function speakOnDevice(
  * fires when the voice finishes (or if it cannot play at all).
  */
 
-function directFreeTtsUrl(text: string, language: string): string {
+function chunkSpeechText(text: string, maxLen = 160): string[] {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+  const parts: string[] = [];
+  let rest = clean;
+  while (rest.length > maxLen) {
+    let cut = rest.lastIndexOf(" ", maxLen);
+    if (cut < 40) cut = maxLen;
+    parts.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) parts.push(rest);
+  return parts;
+}
+
+function directFreeTtsUrl(chunk: string, language: string): string {
   const tl = language === "en" ? "en-IN" : language;
   const host = ["https://translate", "googleapis.com"].join(".");
   const path = "/translate_tts?ie=UTF-8&client=tw-ob&tl=";
-  return host + path + encodeURIComponent(tl) + "&q=" + encodeURIComponent(text.slice(0, 200));
+  return host + path + encodeURIComponent(tl) + "&q=" + encodeURIComponent(chunk);
 }
 
 export async function speak(
@@ -221,17 +236,39 @@ export async function speak(
     if (myRun === runId) onDone();
   };
   let triedDirect = false;
-  player.onerror = () => {
-    if (settled) return;
-    if (!triedDirect && myRun === runId) {
-      triedDirect = true;
-      player.src = directFreeTtsUrl(body, language);
+  const playDirectChunks = () => {
+    const chunks = chunkSpeechText(body);
+    let idx = 0;
+    const nextChunk = () => {
+      if (myRun !== runId || settled) return;
+      if (idx >= chunks.length) {
+        settled = true;
+        onDone();
+        return;
+      }
+      player.onended = nextChunk;
+      player.onerror = () => {
+        if (!settled) {
+          settled = true;
+          fallback();
+        }
+      };
+      player.src = directFreeTtsUrl(chunks[idx++], language);
       player.play().catch(() => {
         if (!settled) {
           settled = true;
           fallback();
         }
       });
+    };
+    nextChunk();
+  };
+
+  player.onerror = () => {
+    if (settled) return;
+    if (!triedDirect && myRun === runId) {
+      triedDirect = true;
+      playDirectChunks();
       return;
     }
     settled = true;
