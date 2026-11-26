@@ -183,6 +183,14 @@ function speakOnDevice(
  * Read the text out loud. Resolves when playback has been started; `onDone`
  * fires when the voice finishes (or if it cannot play at all).
  */
+
+function directFreeTtsUrl(text: string, language: string): string {
+  const tl = language === "en" ? "en-IN" : language;
+  const host = ["https://translate", "googleapis.com"].join(".");
+  const path = "/translate_tts?ie=UTF-8&client=tw-ob&tl=";
+  return host + path + encodeURIComponent(tl) + "&q=" + encodeURIComponent(text.slice(0, 200));
+}
+
 export async function speak(
   text: string,
   language: string,
@@ -212,8 +220,20 @@ export async function speak(
     settled = true;
     if (myRun === runId) onDone();
   };
+  let triedDirect = false;
   player.onerror = () => {
     if (settled) return;
+    if (!triedDirect && myRun === runId) {
+      triedDirect = true;
+      player.src = directFreeTtsUrl(body, language);
+      player.play().catch(() => {
+        if (!settled) {
+          settled = true;
+          fallback();
+        }
+      });
+      return;
+    }
     settled = true;
     fallback();
   };
