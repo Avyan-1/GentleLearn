@@ -38,6 +38,7 @@ function audioElement(): HTMLAudioElement | null {
   if (!element) {
     element = new Audio();
     element.setAttribute("referrerpolicy", "no-referrer");
+    (element as HTMLAudioElement & { referrerPolicy?: string }).referrerPolicy = "no-referrer";
     element.preload = "auto";
     element.setAttribute("playsinline", "true");
     // iOS looks for the non-standard property as well as the attribute.
@@ -282,22 +283,20 @@ export async function speak(
   player.src = url;
 
   try {
-    // Start immediately, while the tap is still fresh. If the network is very
-    // slow, give up after a while and use the voice already on the device.
     await Promise.race([
       player.play(),
       new Promise<never>((_, reject) =>
-        window.setTimeout(() => reject(new Error("Voice timed out.")), 12_000),
+        window.setTimeout(() => reject(new Error("Voice timed out.")), 8_000),
       ),
     ]);
   } catch {
-    if (myRun !== runId) return;
-    try {
-      player.pause();
-    } catch {
-      // Already stopped.
+    if (myRun !== runId || settled) return;
+    if (!triedDirect) {
+      triedDirect = true;
+      playDirectChunks();
+      return;
     }
-    player.removeAttribute("src");
+    settled = true;
     fallback();
   }
 }
