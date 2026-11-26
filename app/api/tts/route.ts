@@ -140,7 +140,7 @@ async function googleFreeVoice(voice: string, text: string) {
   for (const part of chunks) {
     const q = part.trim();
     if (!q) continue;
-    const url = `https://googleapis.com{encodeURIComponent(tl)}&q=${encodeURIComponent(q)}`;
+    const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
