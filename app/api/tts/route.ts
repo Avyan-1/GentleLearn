@@ -25,8 +25,6 @@ const VOICE_MAP: Record<string, string> = {
   as: "as-IN-YashicaNeural",
 };
 
-const AZURE_VOICES = VOICE_MAP;
-
 function resolveVoice(lang?: string): string {
   if (!lang) return VOICE_MAP.en;
   const normalized = lang.toLowerCase().trim();
@@ -52,7 +50,6 @@ function resolveVoice(lang?: string): string {
   return byName[normalized] || VOICE_MAP.en;
 }
 
-/** The spoken text goes straight into SSML, so the XML characters must be safe. */
 function escapeXml(text: string) {
   return text
     .replace(/&/g, "&amp;")
@@ -62,10 +59,6 @@ function escapeXml(text: string) {
     .replace(/'/g, "&apos;");
 }
 
-/**
- * Generated audio is cached in memory. Serverless instances are reused for a
- * while, so reading the same step twice is instant and costs no request.
- */
 const cache = new Map<string, Buffer>();
 const CACHE_LIMIT = 120;
 
@@ -79,14 +72,12 @@ function remember(key: string, audio: Buffer) {
 
 function looksLikeMp3(audio: Buffer) {
   if (audio.length < 512) return false;
-  // "ID3" tag or a raw MPEG frame sync.
   return (
     (audio[0] === 0x49 && audio[1] === 0x44 && audio[2] === 0x33) ||
     (audio[0] === 0xff && (audio[1] & 0xe0) === 0xe0)
   );
 }
 
-/** Microsoft Edge Read Aloud. No key needed, real neural voices. */
 async function edgeVoice(voice: string, text: string) {
   const tts = new MsEdgeTTS({
     connectionTimeoutMs: 5_000,
@@ -129,33 +120,56 @@ async function edgeVoice(voice: string, text: string) {
   }
 }
 
+const GOOGLE_VOICES = new Set([
+  "en",
+  "hi",
+  "bn",
+  "ta",
+  "te",
+  "mr",
+  "kn",
+  "gu",
+  "pa",
+  "ml",
+]);
 
-/** Free HTTPS MP3 fallback when datacenter IPs (Netlify/AWS) are blocked by Edge TTS. */
-async function googleFreeVoice(voice: string, text: string) {
-  const lang = voice.split("-")[0] || "en";
-  const tl = lang === "en" ? "en-IN" : lang;
-  const chunks = text.match(/.{1,180}(?:\s|$)/g) || [text];
+async function googleTts(text: string, lang: string) {
+  const short = lang.toLowerCase().split("-")[0];
+  if (!GOOGLE_VOICES.has(short)) return null;
+
+  const chunks: string[] = [];
+  let current = "";
+  for (const piece of text.split(/(?<=[.!?।])\s+/)) {
+    if (!piece.trim()) continue;
+    if (current && current.length + piece.length + 1 > 180) {
+      chunks.push(current.trim());
+      current = piece;
+    } else {
+      current = current ? `${current} ${piece}` : piece;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  if (chunks.length === 0) chunks.push(text.slice(0, 180));
+
   const buffers: Buffer[] = [];
-
-  for (const part of chunks) {
-    const q = part.trim();
-    if (!q) continue;
-    const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(q)}`;
-    const res = await fetch(url, {
+  for (const chunk of chunks) {
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(
+      short,
+    )}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+    const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "Referer": "https://google.com",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Referer: "https://translate.google.com/",
       },
     });
-    if (!res.ok) return null;
-    buffers.push(Buffer.from(await res.arrayBuffer()));
+    if (!response.ok) return null;
+    buffers.push(Buffer.from(await response.arrayBuffer()));
   }
-
-  const combined = Buffer.concat(buffers);
-  return combined.length > 512 ? combined : null;
+  const audio = Buffer.concat(buffers);
+  return looksLikeMp3(audio) ? audio : null;
 }
 
-/** Optional paid providers, used only when a key is configured. */
 async function elevenLabs(text: string) {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) return null;
@@ -244,8 +258,8 @@ async function synthesize(rawText: string, language: string) {
 
   const providers: Array<[string, () => Promise<Buffer | null>]> = [
     ["edge", () => edgeVoice(voice, text)],
-    ["google-free", () => googleFreeVoice(voice, text)],
-    ["azure", () => azureVoice(text, AZURE_VOICES[voice] ?? voice)],
+    ["google", () => googleTts(text, language)],
+    ["azure", () => azureVoice(text, voice)],
     ["elevenlabs", () => elevenLabs(text)],
     ["openai", () => openAi(text)],
   ];
@@ -264,14 +278,9 @@ async function synthesize(rawText: string, language: string) {
     }
   }
 
-  // Nothing produced audio: tell the browser to use the voice on the device.
   return new Response(null, { status: 204 });
 }
 
-/**
- * The player uses GET so the audio element can stream the sound directly.
- * That is the only reliable way to play on iPhones and older Android phones.
- */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   return synthesize(
