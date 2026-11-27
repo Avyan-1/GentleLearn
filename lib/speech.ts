@@ -7,8 +7,7 @@
  * sound straight from /api/tts, which is the only reliable way to play on
  * iPhones and older Android phones: no fetch, no blob, no waiting.
  *
- * If the server has no voice, the browser fetches a free Google voice directly
- * (chunked). If that also fails, the voice built into the device is used.
+ * If the server has no voice, the voice built into the device is used.
  */
 
 export const voiceLocales: Record<string, string> = {
@@ -29,6 +28,7 @@ export const voiceLocales: Record<string, string> = {
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
+/** One player for the whole app, so phones remember that sound is allowed. */
 let element: HTMLAudioElement | null = null;
 let runId = 0;
 let unlocked = false;
@@ -38,15 +38,19 @@ function audioElement(): HTMLAudioElement | null {
   if (!element) {
     element = new Audio();
     element.setAttribute("referrerpolicy", "no-referrer");
-    (element as HTMLAudioElement & { referrerPolicy?: string }).referrerPolicy =
-      "no-referrer";
+    (element as HTMLAudioElement & { referrerPolicy?: string }).referrerPolicy = "no-referrer";
     element.preload = "auto";
     element.setAttribute("playsinline", "true");
+    // iOS looks for the non-standard property as well as the attribute.
     (element as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
   }
   return element;
 }
 
+/**
+ * Call this straight from a tap handler, before any `await`. It plays a
+ * half-second of silence so the phone marks the player as "allowed".
+ */
 export function unlockVoice() {
   if (typeof window === "undefined" || unlocked) return;
   try {
@@ -55,12 +59,8 @@ export function unlockVoice() {
     const started = unlocker.play();
     if (started) {
       started
-        .then(() => {
-          unlocked = true;
-        })
-        .catch(() => {
-          unlocked = false;
-        });
+        .then(() => { unlocked = true; })
+        .catch(() => { unlocked = false; });
     }
   } catch {
     unlocked = false;
@@ -78,8 +78,6 @@ export function stopVoice() {
     }
     player.onended = null;
     player.onerror = null;
-    player.onstalled = null;
-    player.onabort = null;
     player.removeAttribute("src");
     try {
       player.load();
@@ -88,11 +86,7 @@ export function stopVoice() {
     }
   }
   if (typeof window !== "undefined") {
-    try {
-      window.speechSynthesis?.cancel();
-    } catch {
-      // Some browsers throw if called too early. Harmless.
-    }
+    window.speechSynthesis?.cancel();
   }
 }
 
@@ -119,6 +113,7 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
     window.speechSynthesis.addEventListener("voiceschanged", finish, {
       once: true,
     });
+    // Safari sometimes never fires the event, so do not wait forever.
     window.setTimeout(finish, 1200);
   });
 }
@@ -129,30 +124,19 @@ function pickDeviceVoice(
 ): SpeechSynthesisVoice | null {
   const wanted = (voiceLocales[language] ?? "en-IN").toLowerCase();
   const short = wanted.split("-")[0];
+  const inLanguage = voices.filter((voice) => {
+    const tag = voice.lang.toLowerCase().replace("_", "-");
+    return tag === wanted || tag.startsWith(`${short}-`) || tag === short;
+  });
+  if (inLanguage.length === 0) return null;
 
-  const fallbacks: Record<string, string[]> = {
-    as: ["as-in", "bn-in", "bn"],
-    or: ["or-in"],
-    pa: ["pa-in", "hi-in", "hi"],
-  };
-  const wantedTags = [wanted, ...(fallbacks[short] ?? [])];
-
-  for (const tag of wantedTags) {
-    const inLanguage = voices.filter((voice) => {
-      const vtag = voice.lang.toLowerCase().replace("_", "-");
-      return vtag === tag || vtag.startsWith(`${tag.split("-")[0]}-`);
-    });
-    if (inLanguage.length === 0) continue;
-    const picked =
-      inLanguage.find((voice) =>
-        /natural|neural|premium|enhanced|siri|google/i.test(voice.name),
-      ) ??
-      inLanguage.find((voice) => voice.localService) ??
-      inLanguage[0];
-    if (picked) return picked;
-  }
-
-  return voices[0] ?? null;
+  return (
+    inLanguage.find((voice) =>
+      /natural|neural|premium|enhanced|siri|google/i.test(voice.name),
+    ) ??
+    inLanguage.find((voice) => voice.localService) ??
+    inLanguage[0]
+  );
 }
 
 function speakOnDevice(
@@ -179,10 +163,8 @@ function speakOnDevice(
     window.clearTimeout(safety);
     if (expectedRun === runId) onDone();
   };
-  const safety = window.setTimeout(
-    finish,
-    Math.max(12_000, text.length * 140),
-  );
+  // If the device stays silent, never leave the button spinning.
+  const safety = window.setTimeout(finish, Math.max(12_000, text.length * 140));
 
   utterance.onend = finish;
   utterance.onerror = finish;
@@ -190,10 +172,7 @@ function speakOnDevice(
   void loadVoices().then((voices) => {
     if (expectedRun !== runId) return;
     const voice = pickDeviceVoice(voices, language);
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang;
-    }
+    if (voice) utterance.voice = voice;
     try {
       synth.speak(utterance);
     } catch {
@@ -201,6 +180,11 @@ function speakOnDevice(
     }
   });
 }
+
+/**
+ * Read the text out loud. Resolves when playback has been started; `onDone`
+ * fires when the voice finishes (or if it cannot play at all).
+ */
 
 function chunkSpeechText(text: string, maxLen = 160): string[] {
   const clean = text.replace(/\s+/g, " ").trim();
@@ -248,34 +232,20 @@ export async function speak(
   }
 
   let settled = false;
-  const finishOk = () => {
+  player.onended = () => {
     if (settled) return;
-    if (!player.duration || player.duration < 0.1) {
-      // Empty/204 response: treat as failure and fall through.
-      tryDirect();
-      return;
-    }
     settled = true;
     if (myRun === runId) onDone();
   };
-
   let triedDirect = false;
-  const tryDirect = () => {
-    if (triedDirect || myRun !== runId || settled) {
-      if (!settled) {
-        settled = true;
-        fallback();
-      }
-      return;
-    }
-    triedDirect = true;
+  const playDirectChunks = () => {
     const chunks = chunkSpeechText(body);
     let idx = 0;
     const nextChunk = () => {
       if (myRun !== runId || settled) return;
       if (idx >= chunks.length) {
         settled = true;
-        if (myRun === runId) onDone();
+        onDone();
         return;
       }
       player.onended = nextChunk;
@@ -293,23 +263,18 @@ export async function speak(
         }
       });
     };
-    player.onended = nextChunk;
     nextChunk();
   };
 
-  const safety = window.setTimeout(() => {
-    if (settled) return;
-    tryDirect();
-  }, 8_000);
-
-  player.onended = finishOk;
   player.onerror = () => {
     if (settled) return;
-    tryDirect();
-  };
-  player.onstalled = () => {
-    if (settled) return;
-    tryDirect();
+    if (!triedDirect && myRun === runId) {
+      triedDirect = true;
+      playDirectChunks();
+      return;
+    }
+    settled = true;
+    fallback();
   };
 
   const url = `/api/tts?language=${encodeURIComponent(
@@ -318,9 +283,20 @@ export async function speak(
   player.src = url;
 
   try {
-    await player.play();
+    await Promise.race([
+      player.play(),
+      new Promise<never>((_, reject) =>
+        window.setTimeout(() => reject(new Error("Voice timed out.")), 8_000),
+      ),
+    ]);
   } catch {
     if (myRun !== runId || settled) return;
-    tryDirect();
+    if (!triedDirect) {
+      triedDirect = true;
+      playDirectChunks();
+      return;
+    }
+    settled = true;
+    fallback();
   }
 }
