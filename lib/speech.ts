@@ -5,9 +5,10 @@
  *
  * The server speaks with real neural voices. The audio element streams the
  * sound straight from /api/tts, which is the only reliable way to play on
- * iPhones and older Android phones.
+ * iPhones and older Android phones: no fetch, no blob, no waiting.
  *
- * If the server has no voice, the voice built into the device is used.
+ * If the server has no voice, the browser fetches a free Google voice directly
+ * (chunked). If that also fails, the voice built into the device is used.
  */
 
 export const voiceLocales: Record<string, string> = {
@@ -36,6 +37,9 @@ function audioElement(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null;
   if (!element) {
     element = new Audio();
+    element.setAttribute("referrerpolicy", "no-referrer");
+    (element as HTMLAudioElement & { referrerPolicy?: string }).referrerPolicy =
+      "no-referrer";
     element.preload = "auto";
     element.setAttribute("playsinline", "true");
     (element as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
@@ -43,14 +47,24 @@ function audioElement(): HTMLAudioElement | null {
   return element;
 }
 
-/**
- * Mark the player as allowed. Call this from a tap handler, before any await.
- * We do not play a silent clip here: pausing it again can cancel the real clip
- * that starts a moment later on phones. The real play() is still inside the
- * same user gesture, so the browser allows it.
- */
 export function unlockVoice() {
-  unlocked = true;
+  if (typeof window === "undefined" || unlocked) return;
+  try {
+    const unlocker = new Audio(SILENT_WAV);
+    unlocker.setAttribute("playsinline", "true");
+    const started = unlocker.play();
+    if (started) {
+      started
+        .then(() => {
+          unlocked = true;
+        })
+        .catch(() => {
+          unlocked = false;
+        });
+    }
+  } catch {
+    unlocked = false;
+  }
 }
 
 export function stopVoice() {
@@ -67,7 +81,11 @@ export function stopVoice() {
     player.onstalled = null;
     player.onabort = null;
     player.removeAttribute("src");
-    // Deliberately no load(): it can reset the gesture allowance on iOS.
+    try {
+      player.load();
+    } catch {
+      // Some browsers do not allow load() here. Harmless.
+    }
   }
   if (typeof window !== "undefined") {
     try {
@@ -112,9 +130,6 @@ function pickDeviceVoice(
   const wanted = (voiceLocales[language] ?? "en-IN").toLowerCase();
   const short = wanted.split("-")[0];
 
-  // Some languages have no voice of their own on a given device. Fall back to
-  // a close relative that at least shares the script, so the user still hears
-  // something instead of silence.
   const fallbacks: Record<string, string[]> = {
     as: ["as-in", "bn-in", "bn"],
     or: ["or-in"],
@@ -137,7 +152,6 @@ function pickDeviceVoice(
     if (picked) return picked;
   }
 
-  // Last resort: any voice at all, so speechSynthesis still speaks something.
   return voices[0] ?? null;
 }
 
@@ -153,8 +167,6 @@ function speakOnDevice(
   }
 
   const synth = window.speechSynthesis;
-  synth.cancel();
-
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = voiceLocales[language] ?? "en-IN";
   utterance.rate = 0.9;
@@ -190,6 +202,28 @@ function speakOnDevice(
   });
 }
 
+function chunkSpeechText(text: string, maxLen = 160): string[] {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+  const parts: string[] = [];
+  let rest = clean;
+  while (rest.length > maxLen) {
+    let cut = rest.lastIndexOf(" ", maxLen);
+    if (cut < 40) cut = maxLen;
+    parts.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) parts.push(rest);
+  return parts;
+}
+
+function directFreeTtsUrl(chunk: string, language: string): string {
+  const tl = language === "en" ? "en-IN" : language;
+  const host = ["https://translate", "googleapis.com"].join(".");
+  const path = "/translate_tts?ie=UTF-8&client=tw-ob&tl=";
+  return host + path + encodeURIComponent(tl) + "&q=" + encodeURIComponent(chunk);
+}
+
 export async function speak(
   text: string,
   language: string,
@@ -214,45 +248,79 @@ export async function speak(
   }
 
   let settled = false;
-  const finish = () => {
+  const finishOk = () => {
     if (settled) return;
-    // A server that returned 204 (no voice) makes the element end instantly
-    // with zero duration. Treat that as "no sound" and fall back to the
-    // voice already on the device instead of pretending it worked.
     if (!player.duration || player.duration < 0.1) {
-      fail();
+      // Empty/204 response: treat as failure and fall through.
+      tryDirect();
       return;
     }
     settled = true;
-    window.clearTimeout(safety);
     if (myRun === runId) onDone();
   };
-  const fail = () => {
-    if (settled) return;
-    settled = true;
-    window.clearTimeout(safety);
-    fallback();
-  };
-  // If the server never starts playing (empty 204, network stall, blocked),
-  // do not leave the button spinning and do not stay silent.
-  const safety = window.setTimeout(fail, 8_000);
 
-  player.onended = finish;
-  player.onerror = fail;
-  player.onstalled = fail;
-  player.onabort = fail;
+  let triedDirect = false;
+  const tryDirect = () => {
+    if (triedDirect || myRun !== runId || settled) {
+      if (!settled) {
+        settled = true;
+        fallback();
+      }
+      return;
+    }
+    triedDirect = true;
+    const chunks = chunkSpeechText(body);
+    let idx = 0;
+    const nextChunk = () => {
+      if (myRun !== runId || settled) return;
+      if (idx >= chunks.length) {
+        settled = true;
+        if (myRun === runId) onDone();
+        return;
+      }
+      player.onended = nextChunk;
+      player.onerror = () => {
+        if (!settled) {
+          settled = true;
+          fallback();
+        }
+      };
+      player.src = directFreeTtsUrl(chunks[idx++], language);
+      player.play().catch(() => {
+        if (!settled) {
+          settled = true;
+          fallback();
+        }
+      });
+    };
+    player.onended = nextChunk;
+    nextChunk();
+  };
+
+  const safety = window.setTimeout(() => {
+    if (settled) return;
+    tryDirect();
+  }, 8_000);
+
+  player.onended = finishOk;
+  player.onerror = () => {
+    if (settled) return;
+    tryDirect();
+  };
+  player.onstalled = () => {
+    if (settled) return;
+    tryDirect();
+  };
 
   const url = `/api/tts?language=${encodeURIComponent(
     language,
   )}&text=${encodeURIComponent(body)}`;
-
   player.src = url;
 
   try {
     await player.play();
-    // Playback has begun (or at least been accepted). The safety timer now
-    // only matters if playback stalls before 'ended'.
   } catch {
-    fail();
+    if (myRun !== runId || settled) return;
+    tryDirect();
   }
 }

@@ -133,6 +133,31 @@ const GOOGLE_VOICES = new Set([
   "ml",
 ]);
 
+/** Free HTTPS MP3 fallback (alternate host) when datacenter IPs block Edge TTS. */
+async function googleFreeVoice(voice: string, text: string) {
+  const lang = voice.split("-")[0] || "en";
+  const tl = lang === "en" ? "en-IN" : lang;
+  const chunks = text.match(/.{1,180}(?:\\s|$)/g) || [text];
+  const buffers: Buffer[] = [];
+
+  for (const part of chunks) {
+    const q = part.trim();
+    if (!q) continue;
+    const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        Referer: "https://google.com",
+      },
+    });
+    if (!res.ok) return null;
+    buffers.push(Buffer.from(await res.arrayBuffer()));
+  }
+
+  const combined = Buffer.concat(buffers);
+  return combined.length > 512 ? combined : null;
+}
+
 async function googleTts(text: string, lang: string) {
   const short = lang.toLowerCase().split("-")[0];
   if (!GOOGLE_VOICES.has(short)) return null;
@@ -259,6 +284,7 @@ async function synthesize(rawText: string, language: string) {
   const providers: Array<[string, () => Promise<Buffer | null>]> = [
     ["edge", () => edgeVoice(voice, text)],
     ["google", () => googleTts(text, language)],
+    ["google-free", () => googleFreeVoice(voice, text)],
     ["azure", () => azureVoice(text, voice)],
     ["elevenlabs", () => elevenLabs(text)],
     ["openai", () => openAi(text)],
